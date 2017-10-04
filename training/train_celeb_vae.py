@@ -18,6 +18,7 @@ def train_celeb_vae(args):
     trainer = VaeTrainer(args.latent_dim, transformer, args.out_weights_dir)
 
     celeb_files_list = load_celeb_files(args.celeb_faces_dir)
+    print("Found %d celeb images" % len(celeb_files_list))
     trainer.train(celeb_files_list, args.epochs_num)
 
 

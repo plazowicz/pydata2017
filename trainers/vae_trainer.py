@@ -83,7 +83,7 @@ class VaeTrainer(object):
                                      (epoch, epochs_num, batch_counter, batches_num, losses_vals['vae'],
                                       losses_vals['sse'], losses_vals['kl']))
 
-                    if iter_counter % self.weights_dump_interval == 0:
+                    if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
                         self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
                         self.__dump_weights(iter_counter, mean_out, cov_out, gen_out, sess)
 
