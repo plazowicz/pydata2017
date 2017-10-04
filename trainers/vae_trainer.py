@@ -34,7 +34,7 @@ class VaeTrainer(object):
         mean_out, cov_out, z_mean, z_cov_log_sq = encoder(self.input_images, train_mode=True, z_dim=self.latent_dim)
         z = z_mean + tf.multiply(tf.sqrt(tf.exp(z_cov_log_sq)), eps)
 
-        gen_out, _ = self.model.generator(z, is_train=True)
+        gen_out, _ = generator(z, train_mode=True, image_size=self.img_size)
         generator(z, train_mode=True, image_size=self.img_size)
 
         sse_loss = tf.reduce_mean(tf.square(gen_out.outputs - self.input_images))
