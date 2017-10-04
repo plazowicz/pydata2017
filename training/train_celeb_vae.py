@@ -15,7 +15,7 @@ def load_celeb_files(celeb_faces_dir):
 
 def train_celeb_vae(args):
     transformer = CelebDsTransformer(args.crop_size, args.image_size)
-    trainer = VaeTrainer(args.latent_dir, transformer, args.out_weights_dir)
+    trainer = VaeTrainer(args.latent_dim, transformer, args.out_weights_dir)
 
     celeb_files_list = load_celeb_files(args.celeb_faces_dir)
     trainer.train(celeb_files_list, args.epochs_num)
