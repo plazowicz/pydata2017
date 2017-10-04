@@ -23,6 +23,7 @@ def train_celeb_vae(args):
 
 def main():
     args = parse_args()
+    fs_utils.create_dir_if_not_exists(args.out_weights_dir)
     train_celeb_vae(args)
 
 
