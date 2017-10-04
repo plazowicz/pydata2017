@@ -35,7 +35,6 @@ class VaeTrainer(object):
         z = z_mean + tf.multiply(tf.sqrt(tf.exp(z_cov_log_sq)), eps)
 
         gen_out, _ = generator(z, train_mode=True, image_size=self.img_size)
-        generator(z, train_mode=True, image_size=self.img_size)
 
         sse_loss = tf.reduce_mean(tf.square(gen_out.outputs - self.input_images))
         kl_loss = tf.reduce_mean(- 0.5 * tf.reduce_sum(1 + z_cov_log_sq - tf.square(z_mean)
