@@ -93,11 +93,8 @@ class VaeTrainer(object):
             except StopIteration:
                 self.logger.info("Finished epoch %d" % epoch)
 
-            except Exception as e:
-                raise e
-
     def __run_minibatch(self, sess, optimizer, batch_img_files, losses_exprs):
-        batch_img = [self.transformer.get_img(batch_img_files)]
+        batch_img = [self.transformer.get_img(img_file) for img_file in batch_img_files]
         batch_img = np.array(batch_img, dtype=np.float32)
 
         vae_loss, sse_loss, kl_loss = losses_exprs['vae'], losses_exprs['sse'], losses_exprs['kl']
