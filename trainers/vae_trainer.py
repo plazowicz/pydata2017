@@ -103,8 +103,8 @@ class VaeTrainer(object):
         batch_img = np.array(batch_img, dtype=np.float32)
 
         vae_loss, sse_loss, kl_loss = losses_exprs['vae'], losses_exprs['sse'], losses_exprs['kl']
-        vae_val, sse_val, kl_val = sess.run([vae_loss, sse_loss, kl_loss, optimizer],
-                                            feed_dict={self.input_images: batch_img})
+        vae_val, sse_val, kl_val, _ = sess.run([vae_loss, sse_loss, kl_loss, optimizer],
+                                               feed_dict={self.input_images: batch_img})
 
         return {'vae': vae_val, 'sse': sse_val, 'kl': kl_val}
 
