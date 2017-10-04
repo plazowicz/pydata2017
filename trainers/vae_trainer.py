@@ -59,14 +59,18 @@ class VaeTrainer(object):
     def train(self, images_file_list, epochs_num):
         lr = self.train_options['lr']
         self.logger.info("Composing VAE loss computation graph ...")
-        losses_exprs, mean_out, cov_out, gen_out = self.get_loss()
-        self.logger.info("VAE loss graph is ready")
 
-        vae_vars = self.extract_params(mean_out, cov_out, gen_out)
+        with tf.device("/gpu:%d" % config.GPU_ID):
+            losses_exprs, mean_out, cov_out, gen_out = self.get_loss()
+            self.logger.info("VAE loss graph is ready")
 
-        optimizer = tf.train.AdamOptimizer(lr, beta1=self.train_options['beta1']).minimize(losses_exprs['vae'],
-                                                                                           var_list=vae_vars)
-        sess = tf.InteractiveSession()
+            vae_vars = self.extract_params(mean_out, cov_out, gen_out)
+
+            optimizer = tf.train.AdamOptimizer(lr, beta1=self.train_options['beta1']).minimize(losses_exprs['vae'],
+                                                                                               var_list=vae_vars)
+            sess = tf.InteractiveSession()
+
+        tl.layers.initialize_global_variables(sess)
         batches_num = len(images_file_list) // self.batch_size
 
         iter_counter = 0
