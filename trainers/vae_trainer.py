@@ -74,9 +74,10 @@ class VaeTrainer(object):
         for epoch in xrange(epochs_num):
             try:
                 self.logger.info("Started %d/%d epoch" % (epoch, epochs_num))
-                batch_counter, mini_batch_it = 0, tl.iterate.minibatches(images_file_list, batch_size=self.batch_size)
+                batch_counter, mini_batch_it = 0, tl.iterate.minibatches(images_file_list, targets=images_file_list,
+                                                                         batch_size=self.batch_size)
                 while True:
-                    batch_img_files = mini_batch_it.next()
+                    batch_img_files, _ = mini_batch_it.next()
                     losses_vals = self.__run_minibatch(sess, optimizer, batch_img_files, losses_exprs)
 
                     self.logger.info("Epoch: %d/%d, batch: %d/%d, VAE loss: %.8f, SSE loss: %.8f, KL loss: .%8f" %
