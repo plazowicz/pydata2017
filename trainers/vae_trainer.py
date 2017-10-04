@@ -71,7 +71,7 @@ class VaeTrainer(object):
 
         iter_counter = 0
 
-        for epoch in epochs_num:
+        for epoch in xrange(epochs_num):
             try:
                 self.logger.info("Started %d/%d epoch" % (epoch, epochs_num))
                 batch_counter, mini_batch_it = 0, tl.iterate.minibatches(images_file_list, batch_size=self.batch_size)
