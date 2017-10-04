@@ -8,13 +8,13 @@ from tensorflow.python.ops.image_ops_impl import ResizeMethod
 
 def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32, reuse=False):
 
-    input_layer = InputLayer(input_placeholder, name='enc/input')
     w_init = tf.random_normal_initializer(stddev=0.02)
     gamma_init = tf.random_normal_initializer(1., 0.02)
 
     with tf.variable_scope("encoder", reuse=reuse):
         tl.layers.set_name_reuse(reuse)
 
+        input_layer = InputLayer(input_placeholder, name='enc/input')
         conv1_layer = Conv2d(input_layer, n_filter=conv_filters_num, filter_size=(4, 4), strides=(2, 2),
                              act=None, padding='SAME', name='enc/conv1')
 
