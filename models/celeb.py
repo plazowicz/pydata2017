@@ -6,13 +6,15 @@ from tensorlayer.layers import InputLayer, Conv2d, BatchNormLayer, FlattenLayer,
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
 
 
-def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32):
+def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32, reuse=False):
 
     input_layer = InputLayer(input_placeholder, name='enc/input')
     w_init = tf.random_normal_initializer(stddev=0.02)
     gamma_init = tf.random_normal_initializer(1., 0.02)
 
-    with tf.variable_scope("encoder"):
+    with tf.variable_scope("encoder", reuse=reuse):
+        tl.layers.set_name_reuse(reuse)
+
         conv1_layer = Conv2d(input_layer, n_filter=conv_filters_num, filter_size=(4, 4), strides=(2, 2),
                              act=None, padding='SAME', name='enc/conv1')
 
@@ -50,14 +52,16 @@ def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32):
     return mean_out, cov_out, z_mean, z_cov
 
 
-def generator(input_placeholder, train_mode, image_size):
+def generator(input_placeholder, train_mode, image_size, reuse=False):
     s2, s4, s8, s16 = int(image_size / 2), int(image_size / 4), int(image_size / 8), int(image_size / 16)
     gf_dim = 32
 
     w_init = tf.random_normal_initializer(stddev=0.02)
     gamma_init = tf.random_normal_initializer(1., 0.02)
 
-    with tf.variable_scope("decoder"):
+    with tf.variable_scope("decoder", reuse=reuse):
+        tl.layers.set_name_reuse(reuse)
+
         input_layer = InputLayer(input_placeholder, name='dec/input')
         lin_layer = DenseLayer(input_layer, n_units=gf_dim * 8 * s16 * s16, W_init=w_init,
                                act=tf.identity, name='dec/lin')
