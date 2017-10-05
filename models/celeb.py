@@ -34,13 +34,8 @@ def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32, reuse=Fal
         bn3_layer = BatchNormLayer(conv3_layer, act=lambda x: tl.act.lrelu(x, 0.02), is_train=train_mode,
                                    gamma_init=gamma_init, name='enc/bn3')
 
-        conv4_layer = Conv2d(bn3_layer, n_filter=8 * conv_filters_num, filter_size=(4, 4), strides=(2, 2),
-                             act=None, padding='SAME', name='enc/conv4')
-        bn4_layer = BatchNormLayer(conv4_layer, act=lambda x: tl.act.lrelu(x, 0.02), is_train=train_mode,
-                                   gamma_init=gamma_init, name='enc/bn4')
-
         # mean of Z
-        mean_flat_layer = FlattenLayer(bn4_layer, name='enc/mean_flatten')
+        mean_flat_layer = FlattenLayer(bn3_layer, name='enc/mean_flatten')
         mean_out = DenseLayer(mean_flat_layer, n_units=z_dim, act=tf.identity, W_init=w_init, name='enc/mean_out_lin')
         mean_out = BatchNormLayer(mean_out, act=tf.identity, is_train=train_mode, gamma_init=gamma_init,
                                   name='enc/mean_out')

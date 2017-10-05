@@ -4,6 +4,7 @@ import os.path as op
 import cv2
 import numpy as np
 import tensorflow as tf
+import tensorlayer as tl
 
 import config
 from transformers.celeb import CelebDsTransformer
@@ -34,6 +35,8 @@ class VaeCelebFacesGenerator(object):
 
         self.__save_original_images(img_paths_to_reconstruct, out_original_path)
         sess = tf.InteractiveSession()
+
+        tl.layers.initialize_global_variables(sess)
 
         with tf.device("/gpu:%d" % config.GPU_ID):
             input_images = tf.placeholder(tf.float32, [1, self.img_size, self.img_size, 3])
