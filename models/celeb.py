@@ -127,7 +127,7 @@ def load_enc_with_weights(sess, enc_input, enc_path):
     enc_params = tl.files.load_npz(path=enc_path, name='')
     z_dim, filters_num = read_enc_settings_with_weights(enc_path)
 
-    mean_out, cov_out, z_mean, z_cov = encoder(enc_input, z_dim, False, filters_num)
+    mean_out, cov_out, z_mean, z_cov = encoder(enc_input, z_dim, False, filters_num, True)
     load_enc_with_weights.logger.info("Loading weights for encoder, latent dim = %d, conv filters num = %d"
                                       % (z_dim, filters_num))
 
@@ -144,7 +144,7 @@ def load_gen_with_weights(sess, gen_input, gen_path):
 
     load_gen_with_weights.logger.info("Loading weights for generator, img size = %d" % img_size)
 
-    gen_out, gen_logits = generator(gen_input, False, img_size)
+    gen_out, gen_logits = generator(gen_input, False, img_size, True)
     tl.files.assign_params(sess, gen_params, gen_out)
 
     return gen_out, gen_logits
