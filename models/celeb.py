@@ -1,9 +1,12 @@
 import tensorflow as tf
 import tensorlayer as tl
+import numpy as np
 
 from tensorlayer.layers import InputLayer, Conv2d, BatchNormLayer, FlattenLayer, DenseLayer, \
     ReshapeLayer, UpSampling2dLayer
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
+
+from utils.logger import log
 
 
 def encoder(input_placeholder, z_dim, train_mode, conv_filters_num=32, reuse=False):
@@ -104,10 +107,79 @@ def generator(input_placeholder, train_mode, image_size, reuse=False):
     return conv4_layer, logits
 
 
-class CelebVae(object):
+@log
+def load_model_with_weights(sess, enc_input, gen_input, enc_path, gen_path):
 
-    def __init__(self, latent_dim, image_size, batch_size, filters_num=64):
-        self.input_images = tf.placeholder(tf.float32, [batch_size, image_size, image_size, 3], 'input_images')
-        self.mean_out, self.cov_out, self.z_mean, self.z_cov = encoder(self.input_images, True,
-                                                                       {'latent_dim': latent_dim,
-                                                                        'filters_num': filters_num})
+    enc_params = tl.files.load_npz(path=enc_path, name='')
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+
+    z_dim, img_size, filters_num = read_settings_from_weights(enc_path, gen_path)
+
+    mean_out, cov_out, _, _ = encoder(enc_input, z_dim, False, filters_num)
+    gen_out, _ = generator(gen_input, False, img_size)
+
+    load_model_with_weights.logger.info("Loading weight for encoder and generator, latent dim = %d, "
+                                        "image size = %d, conv filters num = %d" % (z_dim, img_size, filters_num))
+
+    tl.files.assign_params(sess, enc_params[:24], mean_out)
+    tl.files.assign_params(sess, np.concatenate((enc_params[:24], enc_params[30:]), axis=0), cov_out)
+
+    tl.files.assign_params(sess, gen_params, gen_out)
+
+
+@log
+def load_enc_with_weights(sess, enc_input, enc_path):
+    enc_params = tl.files.load_npz(path=enc_path, name='')
+    z_dim, filters_num = read_enc_settings_with_weights(enc_path)
+
+    mean_out, cov_out, z_mean, z_cov = encoder(enc_input, z_dim, False, filters_num)
+    load_enc_with_weights.logger.info("Loading weights for encoder, latent dim = %d, conv filters num = %d"
+                                      % (z_dim, filters_num))
+
+    tl.files.assign_params(sess, enc_params[:24], mean_out)
+    tl.files.assign_params(sess, np.concatenate((enc_params[:24], enc_params[30:]), axis=0), cov_out)
+
+    return mean_out, cov_out, z_mean, z_cov
+
+
+@log
+def load_gen_with_weights(sess, gen_input, gen_path):
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    img_size = read_gen_settings_with_weights(gen_path)
+
+    load_gen_with_weights.logger.info("Loading weights for generator, img size = %d" % img_size)
+
+    gen_out, gen_logits = generator(gen_input, False, img_size)
+    tl.files.assign_params(sess, gen_params, gen_out)
+
+    return gen_out, gen_logits
+
+
+def read_enc_settings_with_weights(enc_path):
+    enc_params = tl.files.load_npz(path=enc_path, name='')
+    filters_num = enc_params[0].shape[-1]
+    z_dim = enc_params[-1].shape[0]
+
+    return z_dim, filters_num
+
+
+def read_gen_settings_with_weights(gen_path):
+    import math
+
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    img_size = int(math.sqrt(gen_params[0].shape[1] / (32 * 8))) * 16
+    return img_size
+
+
+def read_settings_from_weights(enc_path, gen_path):
+    import math
+
+    enc_params = tl.files.load_npz(path=enc_path, name='')
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+
+    first_conv_filter = enc_params[0]
+    filters_num = first_conv_filter.shape[-1]
+    z_dim = gen_params[0].shape[0]
+    img_size = int(math.sqrt(gen_params[0].shape[1] / (32 * 8))) * 16
+
+    return z_dim, img_size, filters_num
