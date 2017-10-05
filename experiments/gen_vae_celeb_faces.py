@@ -75,7 +75,8 @@ class VaeCelebFacesGenerator(object):
     def __select_celeb_faces(self, how_many):
         import random
 
-        celeb_files_list = fs_utils.load_files_from_dir(self.celeb_faces_dir, ('jpg', 'png', 'jpeg'))
+        celeb_files_list = [op.join(self.celeb_faces_dir, p) for p in
+                            fs_utils.load_files_from_dir(self.celeb_faces_dir, ('jpg', 'png', 'jpeg'))]
         random.shuffle(celeb_files_list)
 
         return celeb_files_list[:how_many]
