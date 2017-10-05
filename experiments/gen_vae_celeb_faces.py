@@ -69,7 +69,7 @@ class VaeCelebFacesGenerator(object):
         gen_images = []
         for i in xrange(self.samples_num):
             gen_img = sess.run(x_generated)
-            gen_images.append(gen_img)
+            gen_images.append(gen_img[0])
 
             self.logger.info("Generated %d/%d images" % (i, self.samples_num))
 
