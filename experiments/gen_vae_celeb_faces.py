@@ -8,7 +8,7 @@ import tensorlayer as tl
 
 import config
 from transformers.celeb import CelebDsTransformer
-from models.celeb import read_settings_from_weights, load_enc_with_weights, load_gen_with_weights
+from models.celeb_vae import read_settings_from_weights, load_enc_with_weights, load_gen_with_weights
 from utils import fs_utils
 from utils.logger import log
 from utils import img_ops

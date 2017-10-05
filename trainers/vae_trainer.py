@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorlayer as tl
 import numpy as np
 
-from models.celeb import encoder, generator
+from models.celeb_vae import encoder, generator
 from utils.train_utils import adam_learning_options
 from utils.logger import log
 import config
