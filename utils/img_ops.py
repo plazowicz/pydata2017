@@ -16,7 +16,7 @@ def bound_image_values(img_arr):
 
 def merge_images_to_grid(images, grid_size):
     h, w = images.shape[1], images.shape[2]
-    big_img = np.zeros((h, w, 3), dtype=np.uint8)
+    big_img = np.zeros((h * grid_size[0], w * grid_size[1], 3), dtype=np.uint8)
     for idx, image in enumerate(images):  # idx=0,1,2,...,63
         i = idx % grid_size[1]  # column number
         j = idx // grid_size[1]  # row number
