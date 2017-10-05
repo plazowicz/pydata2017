@@ -63,7 +63,7 @@ class VaeCelebFacesGenerator(object):
         sess = tf.InteractiveSession()
         with tf.device("/gpu:%d" % config.GPU_ID):
             z = tf.random_normal(shape=(1, self.z_dim), mean=0.0, stddev=1.0)
-            gen_out, _ = load_gen_with_weights(sess, z, self.gen_path)
+            gen_out, _ = load_gen_with_weights(sess, z, self.gen_path, reuse=True)
             x_generated = gen_out.outputs
 
         gen_images = []
