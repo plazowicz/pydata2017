@@ -111,7 +111,7 @@ class GanTrainer(object):
                                                                    self.z: batch_z})
         return d_loss_val
 
-    def __run_gen_minibatch(self, sess, g_optimizer, batch_z, losses_exprs):
+    def __run_gen_minibatch(self, sess, g_optimizer, losses_exprs, batch_z):
         g_loss = losses_exprs['g_loss']
         _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.z: batch_z})
 
