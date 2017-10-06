@@ -72,6 +72,8 @@ class GanTrainer(object):
 
         self.logger.info("GAN graph is ready")
         sess = tf.InteractiveSession()
+
+        tl.layers.initialize_global_variables(sess)
         batches_num = len(images_file_list) // self.batch_size
 
         iter_counter = 0
