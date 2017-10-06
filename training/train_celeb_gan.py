@@ -1,26 +1,24 @@
-import os.path as op
-
 import argparse
+
 import config
-from trainers.vae_trainer import VaeTrainer
+from utils.fs_utils import load_celeb_files, create_dir_if_not_exists
+
+from trainers.gan_trainer import GanTrainer
 from transformers.celeb import CelebDsTransformer
 
-from utils import fs_utils
 
-
-def train_celeb_vae(args):
+def train_celeb_gan(args):
     transformer = CelebDsTransformer(args.crop_size, args.image_size)
-    trainer = VaeTrainer(args.latent_dim, transformer, args.out_weights_dir)
-
-    celeb_files_list = fs_utils.load_celeb_files(args.celeb_faces_dir)
+    trainer = GanTrainer(args.latent_dim, transformer, args.out_weights_dir)
+    celeb_files_list = load_celeb_files(args.celeb_faces_dir)
     print("Found %d celeb images" % len(celeb_files_list))
     trainer.train(celeb_files_list, args.epochs_num)
 
 
 def main():
     args = parse_args()
-    fs_utils.create_dir_if_not_exists(args.out_weights_dir)
-    train_celeb_vae(args)
+    create_dir_if_not_exists(args.out_weights_dir)
+    train_celeb_gan(args)
 
 
 def parse_args():
