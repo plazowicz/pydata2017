@@ -89,3 +89,27 @@ def discriminator(input_placeholder, train_mode, reuse=False):
 
     return out_layer, logits
 
+
+@log
+def load_gen_with_weights(sess, gen_input, batch_size, gen_path, reuse=False):
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    img_size, latent_dim = read_settings_with_weights(gen_path)
+
+    load_gen_with_weights.logger.info("Loading weights for generator, img size = %d, latent dim = %d" %
+                                      (img_size, latent_dim))
+    gen_out_layer, gen_out = generator(gen_input, False, img_size, batch_size, reuse)
+
+    tl.files.assign_params(sess, gen_params, gen_out)
+    return gen_out_layer, gen_out
+
+
+def read_settings_with_weights(gen_path):
+    import math
+
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    filters_num = gen_params[-3].shape[0]
+
+    dense_layer_out, latent_dim = gen_params[0].shape[1], gen_params[0].shape[0]
+    img_size = int(math.sqrt(dense_layer_out / (filters_num * 8))) * 16
+
+    return img_size, latent_dim
