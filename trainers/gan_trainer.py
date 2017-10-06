@@ -30,29 +30,29 @@ class GanTrainer(object):
         self.z = tf.placeholder(tf.float32, shape=[None, self.latent_dim], name='z')
 
     def get_loss(self):
-        g_out, _ = generator(self.z, True, self.img_size, self.batch_size)
-        d_out, d_logits = discriminator(self.input_images, True)
-        d_fake_out, d_fake_logits = discriminator(g_out.outputs, True, reuse=True)
+        g_out_layer, g_out = generator(self.z, True, self.img_size, self.batch_size)
+        d_out_layer, d_logits = discriminator(self.input_images, True)
+        d_fake_out_layer, d_fake_logits = discriminator(g_out, True, reuse=True)
 
         d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=d_logits,
-                                                                             labels=tf.ones_like(d_out)))
+                                                                             labels=tf.ones_like(d_logits)))
         d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=d_fake_logits,
-                                                                             labels=tf.zeros_like(d_fake_out)))
+                                                                             labels=tf.zeros_like(d_fake_logits)))
         g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=d_fake_logits,
-                                                                        labels=tf.ones_like(d_fake_out)))
+                                                                        labels=tf.ones_like(d_fake_logits)))
         d_loss = d_loss_real + d_loss_fake
 
         return {'d_loss': d_loss, 'g_loss': g_loss, 'd_loss_real': d_loss_real,
-                'd_loss_fake': d_loss_fake}, d_out, g_out
+                'd_loss_fake': d_loss_fake}, d_out_layer, g_out_layer
 
-    def extract_params(self, d_out, g_out):
+    def extract_params(self, d_out_layer, g_out_layer):
         d_vars = tl.layers.get_variables_with_name("discriminator", True, True)
         g_vars = tl.layers.get_variables_with_name("generator", True, True)
 
         self.logger.info("Discriminator:")
-        d_out.print_params(False)
+        d_out_layer.print_params(False)
         self.logger.info("Generator:")
-        g_out.print_params(False)
+        g_out_layer.print_params(False)
 
         return d_vars, g_vars
 
@@ -61,9 +61,9 @@ class GanTrainer(object):
 
         self.logger.info("Composing GAN computation graph ...")
         with tf.device("/gpu:%d" % config.GPU_ID):
-            losses_exprs, d_out, g_out = self.get_loss()
+            losses_exprs, d_out_layer, g_out_layer = self.get_loss()
 
-            d_vars, g_vars = self.extract_params(d_out, g_out)
+            d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
 
             d_optimizer = tf.train.AdamOptimizer(lr, beta1=self.train_options['beta1']).minimize(
                 losses_exprs['d_loss'], var_list=d_vars)

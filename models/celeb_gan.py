@@ -48,10 +48,9 @@ def generator(input_placeholder, train_mode, image_size, batch_size, reuse=False
         up4_layer = DeConv2d(bn3_layer, 3, (5, 5), out_size=(image_size, image_size), strides=(2, 2),
                              padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='gen/up4')
 
-        logits = up4_layer.outputs
         up4_layer.outputs = tf.nn.tanh(up4_layer.outputs)
 
-    return up4_layer, logits
+    return up4_layer, up4_layer.outputs
 
 
 def discriminator(input_placeholder, train_mode, reuse=False):
