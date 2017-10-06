@@ -93,7 +93,7 @@ class GanTrainer(object):
 
                     if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
                         self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
-                        self.__dump_weights(iter_counter, d_out, g_out, sess)
+                        self.__dump_weights(iter_counter, d_out_layer, g_out_layer, sess)
 
                     batch_counter += 1
                     iter_counter += 1
