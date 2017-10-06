@@ -32,7 +32,7 @@ class GanTrainer(object):
     def get_loss(self):
         g_out, _ = generator(self.z, True, self.img_size, self.batch_size)
         d_out, d_logits = discriminator(self.input_images, True)
-        d_fake_out, d_fake_logits = discriminator(g_out, True, reuse=True)
+        d_fake_out, d_fake_logits = discriminator(g_out.outputs, True, reuse=True)
 
         d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=d_logits,
                                                                              labels=tf.ones_like(d_out)))
