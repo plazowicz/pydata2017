@@ -7,8 +7,7 @@ from tensorlayer.layers import InputLayer, Conv2d, BatchNormLayer, FlattenLayer,
 from utils.logger import log
 
 
-def generator(input_placeholder, train_mode, image_size, batch_size, reuse=False):
-    filters_num = 128
+def generator(input_placeholder, train_mode, image_size, batch_size, reuse=False, filters_num=128):
 
     w_init = tf.random_normal_initializer(stddev=0.02)
     gamma_init = tf.random_normal_initializer(1., 0.02)
@@ -62,6 +61,7 @@ def discriminator(input_placeholder, train_mode, reuse=False):
         tl.layers.set_name_reuse(reuse)
 
         input_layer = InputLayer(input_placeholder, name="discr/in")
+
         conv1_layer = Conv2d(input_layer, n_filter=filters_num, filter_size=(5, 5), strides=(2, 2),
                              act=lambda x: tl.act.lrelu(x, 0.2), padding='SAME', name='discr/conv1', W_init=w_init)
 
@@ -83,6 +83,7 @@ def discriminator(input_placeholder, train_mode, reuse=False):
         flat_layer = FlattenLayer(bn4_layer, name='discr/flatten')
 
         out_layer = DenseLayer(flat_layer, n_units=1, W_init=w_init, act=tf.identity, name='discr/out')
+
         logits = out_layer.outputs
 
         out_layer.outputs = tf.nn.sigmoid(out_layer.outputs)
@@ -99,7 +100,7 @@ def load_gen_with_weights(sess, gen_input, batch_size, gen_path, reuse=False):
                                       (img_size, latent_dim))
     gen_out_layer, gen_out = generator(gen_input, False, img_size, batch_size, reuse)
 
-    tl.files.assign_params(sess, gen_params, gen_out)
+    tl.files.assign_params(sess, gen_params, gen_out_layer)
     return gen_out_layer, gen_out
 
 
