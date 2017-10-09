@@ -14,6 +14,7 @@ class SSGanTrainer(GanTrainer):
                  train_options=adam_learning_options()):
         super(SSGanTrainer, self).__init__(latent_dim, dataset, out_weights_dir, batch_size, train_options)
 
+        self.dataset = dataset
         self.classes_num = classes_num
         self.labels = tf.placeholder(dtype=tf.int32, shape=[self.batch_size, classes_num])
         self.testing_interval = config.TESTING_INTERVAL
