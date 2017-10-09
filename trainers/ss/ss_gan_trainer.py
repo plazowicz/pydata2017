@@ -54,10 +54,12 @@ class SSGanTrainer(GanTrainer):
 
             test_d_out_layer = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
             d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
-            d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], learning_rate=lr * 0.5,
+            d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
+                                                          learning_rate=lr * 0.5,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
                                                           clip_gradients=20.0, variables=d_vars)
-            g_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['g_loss'], learning_rate=lr,
+            g_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['g_loss'], global_step=global_step,
+                                                          learning_rate=lr,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
                                                           clip_gradients=20.0, variables=g_vars)
 
