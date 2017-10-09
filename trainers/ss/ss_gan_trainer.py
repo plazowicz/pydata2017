@@ -53,7 +53,7 @@ class SSGanTrainer(GanTrainer):
         with tf.device("/gpu:%d" % config.GPU_ID):
             losses_exprs, d_out_layer, g_out_layer = self.get_ss_loss()
 
-            test_d_out_layer = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
+            test_d_out_layer, _ = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
             d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
             d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
                                                           learning_rate=lr * 0.5,
