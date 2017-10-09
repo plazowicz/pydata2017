@@ -77,8 +77,8 @@ class SSGanTrainer(GanTrainer):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim]).astype(np.float32)
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_examples, train_labels,
                                                          losses_exprs, batch_z)
-                _ = self.run_gen_minibatch(sess, g_optimizer, train_examples, batch_z)
-                g_loss_val = self.run_gen_minibatch(sess, g_optimizer, train_examples, batch_z)
+                _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                g_loss_val = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
 
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, Discr loss: %.8f, Gen loss: %.8f, global_step: %d" %
                                  (epoch, epochs_num, batch_counter, batches_num, d_loss_val, g_loss_val,
