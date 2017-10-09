@@ -46,7 +46,7 @@ class SSGanTrainer(GanTrainer):
         iter_counter, beta1 = 0, self.train_options['beta1']
         global_step = tf.Variable(0, trainable=False)
 
-        lr = tf.train.exponential_decay(learning_rate=self.train_options['lr'], decay_steps=10000, decay_rate=0.5,
+        lr = tf.train.exponential_decay(learning_rate=self.train_options['lr'], decay_steps=30000, decay_rate=0.5,
                                         staircase=True, global_step=global_step)
 
         self.logger.info("Composing GAN computation graph ...")
