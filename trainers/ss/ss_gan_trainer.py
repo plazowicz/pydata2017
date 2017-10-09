@@ -11,7 +11,7 @@ from utils.train_utils import adam_learning_options
 class SSGanTrainer(GanTrainer):
 
     def __init__(self, latent_dim, classes_num, out_weights_dir, batch_size=64, train_options=adam_learning_options()):
-        super(SSGanTrainer).__init__(latent_dim, None, out_weights_dir, batch_size, train_options)
+        super(SSGanTrainer, self).__init__(latent_dim, None, out_weights_dir, batch_size, train_options)
 
         self.classes_num = classes_num
         self.labels = tf.placeholder(dtype=tf.int32, shape=[self.batch_size, classes_num])
