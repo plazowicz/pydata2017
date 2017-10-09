@@ -107,7 +107,8 @@ class SSGanTrainer(GanTrainer):
     def __test_discriminator(self, iter_num, sess, d_out_layer):
         acc = 0.
         predictions = tf.placeholder(tf.float32, shape=[self.batch_size, self.classes_num])
-        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(predictions, 1), tf.argmax(self.labels, 1)), tf.float32))
+        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(predictions[:, :10], 1), tf.argmax(self.labels, 1)),
+                                          tf.float32))
 
         for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
             if test_iter == iter_num:
