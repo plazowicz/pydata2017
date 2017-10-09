@@ -117,7 +117,7 @@ class GanTrainer(object):
 
         return g_loss_val
 
-    def __dump_weights(self, iter_counter, d_out, g_out, sess):
+    def dump_weights(self, iter_counter, d_out, g_out, sess):
         discr_weights_out_file = op.join(self.out_weights_dir, "gan_discr_%d.npz" % iter_counter)
         gen_weights_out_file = op.join(self.out_weights_dir, "gan_gen_%d.npz" % iter_counter)
 

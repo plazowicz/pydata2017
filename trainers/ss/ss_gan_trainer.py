@@ -85,7 +85,7 @@ class SSGanTrainer(GanTrainer):
                                   sess.run(global_step)))
                 if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
                     self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
-                    self.__dump_weights(iter_counter, d_out_layer, g_out_layer, sess)
+                    self.dump_weights(iter_counter, d_out_layer, g_out_layer, sess)
 
                 if iter_counter % self.testing_interval == 0:
                     self.logger.info("Iteration %d, testing net ..." % iter_counter)
