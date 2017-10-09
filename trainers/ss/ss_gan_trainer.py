@@ -112,7 +112,7 @@ class SSGanTrainer(GanTrainer):
         for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
             if test_iter == iter_num:
                 break
-            batch_acc = sess.run(acc_func, feed_dict={self.labels: test_labels})
+            batch_acc = sess.run(acc_func, feed_dict={self.labels: test_labels, self.input_images: test_batch})
             self.logger.info("Test iteration: %d, accuracy = %.8f" % (test_iter, batch_acc))
             acc += batch_acc
 
