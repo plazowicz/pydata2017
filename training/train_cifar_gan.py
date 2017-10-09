@@ -9,8 +9,8 @@ def train_cifar_gan(args):
     cifar_ds = CifarDataset(args.cifar_ds_path, 64, args.how_many_labeled)
     learning_options = adam_learning_options()
     learning_options['lr'] = args.learning_rate
-    gan_cifar_trainer = SSGanTrainer(args.latent_dim, 10, args.out_weights_dir, 64, learning_options)
-    gan_cifar_trainer.train_ss(cifar_ds, args.epochs_num)
+    gan_cifar_trainer = SSGanTrainer(args.latent_dim, cifar_ds, 10, args.out_weights_dir, 64, learning_options)
+    gan_cifar_trainer.train_ss(args.epochs_num)
 
 
 def main():
