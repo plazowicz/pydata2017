@@ -92,7 +92,6 @@ class SSGanTrainer(GanTrainer):
                     self.__test_discriminator(self.testing_iterations, sess, test_d_out_layer)
 
                 iter_counter += 1
-                sess.run(tf.assign_add(global_step, 1))
 
             self.logger.info("Finished epoch %d" % epoch)
 

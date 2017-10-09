@@ -32,6 +32,11 @@ class CifarDataset(object):
         for i in xrange(0, train_size, self.batch_size):
             data_batch = ds_to_generate[i: i + self.batch_size, :, :, :]
             labels_batch = ds_labels[i: i + self.batch_size]
+            if data_batch.shape[0] < self.batch_size:
+                data_batch = np.concatenate((data_batch,
+                                             ds_to_generate[0: self.batch_size - data_batch.shape[0], :, :, :]), axis=0)
+                labels_batch = np.concatenate((labels_batch, ds_labels[0: self.batch_size - data_batch.shape[0]]),
+                                              axis=0)
             yield bound_image_values(data_batch).astype(np.float32), self.__process_labels(labels_batch)
 
     def img_size(self):
