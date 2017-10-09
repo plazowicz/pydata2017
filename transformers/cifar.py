@@ -56,7 +56,7 @@ class CifarDataset(object):
 
     def __nullify_labels(self, labels):
         ex_per_class = int(self.how_many_labeled / 10)
-        indices = xrange(len(labels))
+        indices = list(xrange(len(labels)))
         random.shuffle(indices)
         classes_indices = {c: (0, []) for c in xrange(10)}
         for indx in indices:
