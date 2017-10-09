@@ -12,11 +12,11 @@ from models.celeb_gan import generator, discriminator
 
 @log
 class GanTrainer(object):
-    def __init__(self, latent_dim, transformer, out_weights_dir, train_options=adam_learning_options()):
+    def __init__(self, latent_dim, transformer, out_weights_dir, batch_size=64, train_options=adam_learning_options()):
         self.out_weights_dir = out_weights_dir
         self.transformer = transformer
         self.latent_dim = latent_dim
-        self.batch_size = 64
+        self.batch_size = batch_size
 
         self.logger.info("Creating output weights directory %s" % self.out_weights_dir)
         tl.files.exists_or_mkdir(out_weights_dir)
@@ -86,9 +86,9 @@ class GanTrainer(object):
                 while True:
                     batch_img_files, _ = mini_batch_it.next()
                     batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim])
-                    d_loss_val = self.__run_discr_minibatch(sess, d_optimizer, batch_img_files, losses_exprs, batch_z)
-                    _ = self.__run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
-                    g_loss_val = self.__run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                    d_loss_val = self.run_discr_minibatch(sess, d_optimizer, batch_img_files, losses_exprs, batch_z)
+                    _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                    g_loss_val = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
 
                     self.logger.info("Epoch: %d/%d, batch: %d/%d, Discr loss: %.8f, Gen loss: %.8f" %
                                      (epoch, epochs_num, batch_counter, batches_num, d_loss_val, g_loss_val))
@@ -102,7 +102,7 @@ class GanTrainer(object):
             except StopIteration:
                 self.logger.info("Finished epoch %d" % epoch)
 
-    def __run_discr_minibatch(self, sess, d_optimizer, batch_img_files, losses_exprs, batch_z):
+    def run_discr_minibatch(self, sess, d_optimizer, batch_img_files, losses_exprs, batch_z):
         batch_imgs = [self.transformer.get_img(img_file) for img_file in batch_img_files]
         batch_imgs = np.array(batch_imgs)
         d_loss = losses_exprs['d_loss']
@@ -111,7 +111,7 @@ class GanTrainer(object):
                                                                    self.z: batch_z})
         return d_loss_val
 
-    def __run_gen_minibatch(self, sess, g_optimizer, losses_exprs, batch_z):
+    def run_gen_minibatch(self, sess, g_optimizer, losses_exprs, batch_z):
         g_loss = losses_exprs['g_loss']
         _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.z: batch_z})
 
