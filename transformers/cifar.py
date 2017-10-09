@@ -69,7 +69,7 @@ class CifarDataset(object):
             indx_label_indices.append(indx)
             classes_indices[indx_label] = (indx_label_ex_num + 1, indx_label_indices)
 
-        train_indices = set(reduce(lambda acc, elem: acc + elem._1, classes_indices.values(), []))
+        train_indices = set(reduce(lambda acc, elem: acc + elem[1], classes_indices.values(), []))
         self.logger.info("Collected %d examples per class, labeled examples = %d" % (ex_per_class, len(train_indices)))
         nullified_labels = [l if i in train_indices else None for i, l in enumerate(labels)]
         return nullified_labels
