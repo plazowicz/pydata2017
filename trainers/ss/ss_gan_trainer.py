@@ -116,7 +116,7 @@ class SSGanTrainer(GanTrainer):
             self.logger.info("Test iteration: %d, accuracy = %.8f" % (test_iter, batch_acc))
             acc += batch_acc
 
-        self.logger.info("Accuracy for %d iterations: %.8f" % (iter_num, acc))
+        self.logger.info("Accuracy for %d iterations: %.8f" % (iter_num, acc/iter_num))
         return acc/iter_num
 
 
