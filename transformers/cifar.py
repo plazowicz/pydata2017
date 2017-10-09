@@ -34,6 +34,12 @@ class CifarDataset(object):
             labels_batch = ds_labels[i: i + self.batch_size]
             yield bound_image_values(data_batch).astype(np.float32), self.__process_labels(labels_batch)
 
+    def img_size(self):
+        return 32
+
+    def size(self):
+        return self.train_data.shape[0]
+
     def __read_train_data(self):
         train_batch_files = [op.join(self.cifar_ds_path, p) for p in ["data_batch_%d" % i for i in xrange(1, 6)]]
         train_data, train_labels = [], []

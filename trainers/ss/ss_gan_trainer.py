@@ -10,8 +10,9 @@ from utils.train_utils import adam_learning_options
 
 class SSGanTrainer(GanTrainer):
 
-    def __init__(self, latent_dim, classes_num, out_weights_dir, batch_size=64, train_options=adam_learning_options()):
-        super(SSGanTrainer, self).__init__(latent_dim, None, out_weights_dir, batch_size, train_options)
+    def __init__(self, latent_dim, dataset, classes_num, out_weights_dir, batch_size=64,
+                 train_options=adam_learning_options()):
+        super(SSGanTrainer, self).__init__(latent_dim, dataset, out_weights_dir, batch_size, train_options)
 
         self.classes_num = classes_num
         self.labels = tf.placeholder(dtype=tf.int32, shape=[self.batch_size, classes_num])
@@ -40,7 +41,7 @@ class SSGanTrainer(GanTrainer):
         return {'d_loss': d_loss, 'g_loss': g_loss, 'd_loss_real': d_loss_real,
                 'd_loss_fake': d_loss_fake}, d_out_layer, g_out_layer
 
-    def train_ss(self, dataset, epochs_num):
+    def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
         global_step = tf.Variable(0, trainable=False)
 
@@ -64,12 +65,12 @@ class SSGanTrainer(GanTrainer):
         sess = tf.InteractiveSession()
 
         tl.layers.initialize_global_variables(sess)
-        batches_num = dataset.size() // self.batch_size
+        batches_num = self.dataset.size() // self.batch_size
 
         for epoch in xrange(epochs_num):
             self.logger.info("Started epoch %d/%d" % (epoch, epochs_num))
 
-            for batch_counter, (train_examples, train_labels) in enumerate(dataset.generate_mb(ds_type='train')):
+            for batch_counter, (train_examples, train_labels) in enumerate(self.dataset.generate_mb(ds_type='train')):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim]).astype(np.float32)
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_examples, train_labels,
                                                          losses_exprs, batch_z)
@@ -83,9 +84,9 @@ class SSGanTrainer(GanTrainer):
                     self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
                     self.__dump_weights(iter_counter, d_out_layer, g_out_layer, sess)
 
-                if iter_counter % self.testing_interval:
+                if iter_counter % self.testing_interval == 0:
                     self.logger.info("Iteration %d, testing net ..." % iter_counter)
-                    self.__test_discriminator(self.testing_iterations, dataset, sess, test_d_out_layer)
+                    self.__test_discriminator(self.testing_iterations, sess, test_d_out_layer)
 
                 iter_counter += 1
                 sess.run(tf.assign_add(global_step, 1))
@@ -100,12 +101,12 @@ class SSGanTrainer(GanTrainer):
 
         return d_loss_val
 
-    def __test_discriminator(self, iter_num, dataset, sess, d_out_layer):
+    def __test_discriminator(self, iter_num, sess, d_out_layer):
         acc = 0.
         predictions = tf.placeholder(tf.float32, shape=[self.batch_size, self.classes_num])
         acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(predictions, 1), tf.argmax(self.labels)), tf.float32))
 
-        for test_iter, (test_batch, test_labels) in enumerate(dataset.generate_mb(ds_type='test')):
+        for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
             if test_iter == iter_num:
                 break
             test_predictions = sess.run(d_out_layer.outputs, feed_dict={self.input_images: test_batch})
