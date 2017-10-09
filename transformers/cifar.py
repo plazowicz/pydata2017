@@ -42,7 +42,7 @@ class CifarDataset(object):
             train_data.append(bf_data)
             train_labels.append(bf_labels)
 
-        train_data, train_labels = np.concatenate(train_data, axis=0), np.concatenate(train_data, axis=0)
+        train_data, train_labels = np.concatenate(train_data, axis=0), np.concatenate(train_labels, axis=0)
         return train_data, self.__nullify_labels(train_labels)
 
     def __process_labels(self, labels):
