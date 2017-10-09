@@ -106,21 +106,17 @@ class SSGanTrainer(GanTrainer):
 
     def __test_discriminator(self, iter_num, sess, d_out_layer):
         acc = 0.
-        predictions = tf.placeholder(tf.float32, shape=[self.batch_size, self.classes_num])
-        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(predictions[:, :10], 1), tf.argmax(self.labels, 1)),
-                                          tf.float32))
+        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(d_out_layer.outputs[:, :self.classes_num], 1),
+                                                   tf.argmax(self.labels, 1)), tf.float32))
 
         for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
             if test_iter == iter_num:
                 break
-            test_predictions = sess.run(d_out_layer.outputs, feed_dict={self.input_images: test_batch})
-            batch_acc = sess.run(acc_func, feed_dict={self.labels: test_labels, predictions: test_predictions})
+            batch_acc = sess.run(acc_func, feed_dict={self.labels: test_labels})
             self.logger.info("Test iteration: %d, accuracy = %.8f" % (test_iter, batch_acc))
             acc += batch_acc
 
         self.logger.info("Accuracy for %d iterations: .8f" % acc)
         return acc/iter_num
-
-
 
 
