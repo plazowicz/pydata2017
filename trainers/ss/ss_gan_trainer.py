@@ -49,7 +49,7 @@ class SSGanTrainer(GanTrainer):
         d_loss = lab_loss + unlab_loss + d_fake_loss
         g_loss = tf.reduce_mean(tf.log(fake_softmax[:, -1]))
 
-        return {'d_loss': d_loss, 'g_loss': g_loss}, d_out_layer, g_out_layer
+        return {'d_loss': d_loss, 'g_loss': g_loss, 'd_unlab_loss': unlab_loss + d_fake_loss}, d_out_layer, g_out_layer
 
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
@@ -111,8 +111,8 @@ class SSGanTrainer(GanTrainer):
             self.logger.info("Finished epoch %d" % epoch)
 
     def run_ss_discr_minibatch(self, sess, d_optimizer, train_examples, train_labels, losses_exprs, batch_z):
-        d_loss = losses_exprs['d_loss']
 
+        d_loss = losses_exprs['d_loss'] if train_labels.size > 0 else losses_exprs['d_unlab_loss']
         _, d_loss_val = sess.run([d_optimizer, d_loss], feed_dict={self.input_images: train_examples,
                                                                    self.labels: train_labels,
                                                                    self.z: batch_z})
