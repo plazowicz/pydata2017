@@ -38,8 +38,8 @@ class SSGanTrainer(GanTrainer):
         unlab_log_logits = tf.reduce_logsumexp(unlab_logits, axis=1)
         fake_log_logits = tf.reduce_logsumexp(d_fake_logits, axis=1)
 
-        unlab_loss = tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits) +
-                                    tf.nn.softplus(fake_log_logits))
+        unlab_loss = tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + tf.reduce_mean(
+            tf.nn.softplus(fake_log_logits))
 
         real_features = tf.reduce_mean(d_previous[0].outputs[labels_size:, 0], axis=0)
         fake_features = tf.reduce_mean(d_fake_previous[0].outputs[labels_size:, 0], axis=0)
