@@ -113,7 +113,7 @@ class CifarDataset(object):
 
     @staticmethod
     def __split_into_lab_unlab(data, labels):
-        labeled_indices = [i for l, i in enumerate(labels) if l is not None]
+        labeled_indices = [i for i, l in enumerate(labels) if l is not None]
         unlabeled_data = data.copy()
         labeled_data = data[labeled_indices, :, :, :]
         labels = np.array(labels)[labeled_indices]
