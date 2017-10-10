@@ -71,7 +71,7 @@ class CifarDataset(object):
         return 32
 
     def size(self):
-        return self.train_data.shape[0]
+        return self.unlab_data.shape[0]
 
     def __read_train_data(self):
         train_batch_files = [op.join(self.cifar_ds_path, p) for p in ["data_batch_%d" % i for i in xrange(1, 6)]]
