@@ -14,46 +14,58 @@ class CifarDataset(object):
         self.cifar_ds_path = cifar_ds_path
         self.how_many_labeled = how_many_labeled
 
-        self.train_data, self.train_labels = self.__read_train_data()
+        train_data, train_labels = self.__read_train_data()
+        self.lab_data, self.unlab_data, self.labels = self.__split_into_lab_unlab(train_data, train_labels)
         self.test_data, self.test_labels = self.__read_batch_file_into_array(op.join(cifar_ds_path, 'test_batch'))
         self.batch_size = batch_size
 
         self.logger.info(
-            "Loaded CIFAR dataset, train size = %d, test size = %d, labeled = %d" % (self.train_data.shape[0],
+            "Loaded CIFAR dataset, train size = %d, test size = %d, labeled = %d" % (train_data.shape[0],
                                                                                      self.test_data.shape[0],
                                                                                      self.how_many_labeled))
 
-    def generate_mb(self, ds_type):
-        assert ds_type in ['train', 'test']
-        train_size = self.train_data.shape[0]
-        ds_to_generate, ds_labels = (self.train_data, self.train_labels) if ds_type == 'train' else \
-            (self.test_data, self.test_labels)
+        self.rng = np.random.RandomState()
+
+    def generate_train_mb(self):
+        train_size = self.unlab_data.shape[0]
+        inds = self.rng.permutation(train_size)
+        unlab_data = self.unlab_data[inds, :, :, :]
+        lab_data, labels = self.extend_labeled_data(self.lab_data, self.labels, unlab_data)
 
         for i in xrange(0, train_size, self.batch_size):
-            data_batch = ds_to_generate[i: i + self.batch_size, :, :, :]
-            labels_batch = ds_labels[i: i + self.batch_size]
-            if data_batch.shape[0] < self.batch_size:
-                current_batch_size = data_batch.shape[0]
-                data_batch = np.concatenate((data_batch,
-                                             ds_to_generate[0: self.batch_size - current_batch_size]), axis=0)
-                labels_batch = np.concatenate((labels_batch, ds_labels[0: self.batch_size - current_batch_size]),
+            lab_data_batch = lab_data[i: i + self.batch_size, :, :, :]
+            unlab_data_batch = unlab_data[i: i + self.batch_size, :, :, :]
+            labels_batch = labels[i: i + self.batch_size]
+
+            if lab_data_batch.shape[0] < self.batch_size:
+                labels_batch = np.concatenate((labels_batch, labels[0: self.batch_size - lab_data_batch.shape[0]]),
                                               axis=0)
+                lab_data_batch = np.concatenate((lab_data_batch, lab_data[0: self.batch_size -
+                                                                        lab_data_batch.shape[0]]), axis=0)
+            if unlab_data_batch.shape[0] < self.batch_size:
+                unlab_data_batch = np.concatenate((unlab_data_batch, unlab_data[0: self.batch_size -
+                                                                            unlab_data_batch.shape[0]]), axis=0)
+
+            yield bound_image_values(lab_data_batch).astype(np.float32), \
+                  bound_image_values(unlab_data_batch).astype(np.float32), self.__process_labels(labels_batch)
+
+    def generate_test_mb(self):
+        for i in xrange(0, self.test_data.shape[0], self.batch_size):
+            data_batch = self.test_data[i: i + self.batch_size, :, :, :]
+            labels_batch = self.test_labels[i: i + self.batch_size]
 
             data_batch = bound_image_values(data_batch).astype(np.float32)
-            lab_data_batch, unlab_data_batch, labels_batch = self.rearrange_data_with_labels(data_batch, labels_batch)
-            if ds_type == 'train':
-                yield lab_data_batch, unlab_data_batch, self.__process_labels(labels_batch)
-            else:
-                yield data_batch, self.__process_labels(labels_batch)
+            yield data_batch, self.__process_labels(labels_batch)
 
-    @staticmethod
-    def rearrange_data_with_labels(data_batch, labels_batch):
-        labeled_indices = [i for i, l in enumerate(labels_batch) if l is not None]
-        unlabeled_indices = [i for i, l in enumerate(labels_batch) if l is None]
-        labeled_data_batch = data_batch[labeled_indices, :, :, :]
-        unlabeled_data_batch = data_batch[unlabeled_indices, :, :, :]
-        labels = [labels_batch[i] for i in labeled_indices]
-        return labeled_data_batch, unlabeled_data_batch, labels
+    def extend_labeled_data(self, lab_data, labels, unlab_data):
+        lab_x, lab_y = [], []
+        for t in xrange(int(np.ceil(unlab_data.shape[0] / float(lab_data.shape[0])))):
+            inds = self.rng.permutation(lab_data.shape[0])
+            lab_x.append(lab_data[inds, :, :, :])
+            lab_y.append(labels[inds])
+        lab_x = np.concatenate(lab_x, axis=0)
+        lab_y = np.concatenate(lab_y, axis=0)
+        return lab_x, lab_y
 
     def img_size(self):
         return 32
@@ -98,6 +110,14 @@ class CifarDataset(object):
         self.logger.info("Collected %d examples per class, labeled examples = %d" % (ex_per_class, len(train_indices)))
         nullified_labels = [l if i in train_indices else None for i, l in enumerate(labels)]
         return nullified_labels
+
+    @staticmethod
+    def __split_into_lab_unlab(data, labels):
+        labeled_indices = [i for l, i in enumerate(labels) if l is not None]
+        unlabeled_data = data.copy()
+        labeled_data = data[labeled_indices, :, :, :]
+        labels = np.array(labels)[labeled_indices]
+        return unlabeled_data, labeled_data, labels
 
     @staticmethod
     def __read_batch_file_into_array(batch_file):

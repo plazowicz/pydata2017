@@ -18,36 +18,35 @@ class SSGanTrainer(GanTrainer):
         self.testing_interval = config.TESTING_INTERVAL
         self.testing_iterations = config.TESTING_ITERATIONS
 
-        self.labels = tf.placeholder(dtype=tf.float32, shape=[None, self.classes_num])
+        self.labels = tf.placeholder(dtype=tf.float32, shape=[self.batch_size, self.classes_num])
+        self.unlabeled_images = tf.placeholder(dtype=tf.float32, shape=[self.batch_size, self.img_size,
+                                                                        self.img_size, 3], name='unlabeled_images')
 
     def get_ss_loss(self):
-        labels_size = tf.shape(self.labels)[0]
-
-        def lab_loss():
-            lab_logits = d_logits[:labels_size, :]
-            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=self.labels))
 
         g_out_layer, g_out = generator(self.z, True, self.batch_size)
-        d_out_layer, d_logits, d_previous = discriminator(self.input_images, True, reuse=False,
-                                                          classes_num=self.classes_num, return_previous=True)
-        d_fake_out_layer, d_fake_logits, d_fake_previous = discriminator(g_out, True, reuse=True,
-                                                                         classes_num=self.classes_num,
-                                                                         return_previous=True)
+        d_lab_out_layer, d_lab_logits, d_lab_previous = discriminator(self.input_images, True, reuse=False,
+                                                                      classes_num=self.classes_num,
+                                                                      return_previous=True)
+        _, d_unlab_logits, d_unlab_previous = discriminator(self.unlabeled_images, True, reuse=True,
+                                                            classes_num=self.classes_num, return_previous=True)
+        _, d_fake_logits, d_fake_previous = discriminator(g_out, True, reuse=True, classes_num=self.classes_num,
+                                                          return_previous=True)
 
-        unlab_logits = d_logits[labels_size:, :]
-        unlab_log_logits = tf.reduce_logsumexp(unlab_logits, axis=1)
+        unlab_log_logits = tf.reduce_logsumexp(d_unlab_logits, axis=1)
         fake_log_logits = tf.reduce_logsumexp(d_fake_logits, axis=1)
 
-        unlab_loss = 0.5*tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + 0.5*tf.reduce_mean(
+        lab_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_lab_logits, labels=self.labels))
+        unlab_loss = 0.5 * tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + 0.5 * tf.reduce_mean(
             tf.nn.softplus(fake_log_logits))
 
-        real_features = tf.reduce_mean(d_previous[0].outputs[labels_size:, 0], axis=0)
-        fake_features = tf.reduce_mean(d_fake_previous[0].outputs[labels_size:, 0], axis=0)
+        real_features = tf.reduce_mean(d_unlab_previous[0], axis=0)
+        fake_features = tf.reduce_mean(d_fake_previous[0], axis=0)
         g_loss = tf.reduce_mean(tf.abs(real_features - fake_features))
 
-        d_loss = tf.cond(labels_size > 0, lambda: lab_loss() + unlab_loss, lambda: unlab_loss)
+        d_loss = lab_loss + unlab_loss
 
-        return {'d_loss': d_loss, 'g_loss': g_loss}, d_out_layer, g_out_layer
+        return {'d_loss': d_loss, 'g_loss': g_loss}, d_lab_out_layer, g_out_layer
 
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
@@ -81,7 +80,7 @@ class SSGanTrainer(GanTrainer):
             self.logger.info("Started epoch %d/%d" % (epoch, epochs_num))
 
             for batch_counter, (train_lab_ex, train_unlab_ex, train_labels) in enumerate(
-                    self.dataset.generate_mb(ds_type='train')):
+                    self.dataset.generate_train_mb()):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim]).astype(np.float32)
                 train_examples = np.concatenate((train_lab_ex, train_unlab_ex), axis=0)
 
@@ -130,7 +129,7 @@ class SSGanTrainer(GanTrainer):
         acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(d_out_layer.outputs, 1),
                                                    tf.argmax(self.labels, 1)), tf.float32))
 
-        for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
+        for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_test_mb()):
             if test_iter == iter_num:
                 break
             batch_acc = sess.run(acc_func, feed_dict={self.labels: test_labels, self.input_images: test_batch})
