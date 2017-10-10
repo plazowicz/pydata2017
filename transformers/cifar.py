@@ -117,7 +117,7 @@ class CifarDataset(object):
         unlabeled_data = data.copy()
         labeled_data = data[labeled_indices, :, :, :]
         labels = np.array(labels)[labeled_indices]
-        return unlabeled_data, labeled_data, labels
+        return labeled_data, unlabeled_data, labels
 
     @staticmethod
     def __read_batch_file_into_array(batch_file):
