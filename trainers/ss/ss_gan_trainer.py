@@ -38,7 +38,7 @@ class SSGanTrainer(GanTrainer):
         unlab_log_logits = tf.reduce_logsumexp(unlab_logits, axis=1)
         fake_log_logits = tf.reduce_logsumexp(d_fake_logits, axis=1)
 
-        unlab_loss = tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + tf.reduce_mean(
+        unlab_loss = 0.5*tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + 0.5*tf.reduce_mean(
             tf.nn.softplus(fake_log_logits))
 
         real_features = tf.reduce_mean(d_previous[0].outputs[labels_size:, 0], axis=0)
@@ -63,7 +63,7 @@ class SSGanTrainer(GanTrainer):
             test_d_out_layer, _ = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
             d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
             d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
-                                                          learning_rate=lr * 0.5,
+                                                          learning_rate=lr,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
                                                           variables=d_vars)
             g_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['g_loss'], global_step=global_step,
