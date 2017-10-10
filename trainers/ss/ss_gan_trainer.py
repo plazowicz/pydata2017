@@ -87,8 +87,9 @@ class SSGanTrainer(GanTrainer):
 
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_examples, train_labels,
                                                          losses_exprs, batch_z)
-                _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
-                g_loss_val = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                # _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_examples, train_labels,
+                                                       losses_exprs, batch_z)
 
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, labeled examples: %d, unlabeled_examples: %d, "
                                  "Discr loss: %.8f, Gen loss: %.8f, global_step: %d" %
@@ -116,6 +117,13 @@ class SSGanTrainer(GanTrainer):
                                                                    self.z: batch_z})
 
         return d_loss_val
+
+    def run_ss_gen_minibatch(self, sess, g_optimizer, train_examples, train_labels, losses_exprs, batch_z):
+        g_loss = losses_exprs['g_loss']
+        _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.input_images: train_examples,
+                                                                   self.labels: train_labels,
+                                                                   self.z: batch_z})
+        return g_loss_val
 
     def __test_discriminator(self, iter_num, sess, d_out_layer):
         acc = 0.
