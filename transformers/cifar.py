@@ -37,7 +37,22 @@ class CifarDataset(object):
                                              ds_to_generate[0: self.batch_size - data_batch.shape[0], :, :, :]), axis=0)
                 labels_batch = np.concatenate((labels_batch, ds_labels[0: self.batch_size - data_batch.shape[0]]),
                                               axis=0)
-            yield bound_image_values(data_batch).astype(np.float32), self.__process_labels(labels_batch)
+
+            data_batch = bound_image_values(data_batch).astype(np.float32)
+            lab_data_batch, unlab_data_batch, labels_batch = self.rearrange_data_with_labels(data_batch, labels_batch)
+            if ds_type == 'train':
+                yield lab_data_batch, unlab_data_batch, self.__process_labels(labels_batch)
+            else:
+                yield data_batch, self.__process_labels(labels_batch)
+
+    @staticmethod
+    def rearrange_data_with_labels(data_batch, labels_batch):
+        labeled_indices = [i for i, l in enumerate(labels_batch) if l is not None]
+        unlabeled_indices = [i for i, l in enumerate(labels_batch) if l is None]
+        labeled_data_batch = data_batch[labeled_indices, :, :, :]
+        unlabeled_data_batch = data_batch[unlabeled_indices, :, :, :]
+        labels = [labels_batch[i] for i in labeled_indices]
+        return labeled_data_batch, unlabeled_data_batch, labels
 
     def img_size(self):
         return 32
@@ -56,13 +71,11 @@ class CifarDataset(object):
         train_data, train_labels = np.concatenate(train_data, axis=0), np.concatenate(train_labels, axis=0)
         return train_data, self.__nullify_labels(train_labels)
 
-    def __process_labels(self, labels):
-        final_labels = np.zeros((self.batch_size, 10), dtype=np.int32)
+    @staticmethod
+    def __process_labels(labels):
+        final_labels = np.zeros((len(labels), 10), dtype=np.uint8)
         for i, l in enumerate(labels):
-            if l is None:
-                final_labels[i, :] = 1
-            else:
-                final_labels[i, l] = 1
+            final_labels[i, l] = 1
         return final_labels
 
     def __nullify_labels(self, labels):

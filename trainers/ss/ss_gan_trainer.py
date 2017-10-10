@@ -16,31 +16,40 @@ class SSGanTrainer(GanTrainer):
 
         self.dataset = dataset
         self.classes_num = classes_num
-        self.labels = tf.placeholder(dtype=tf.int32, shape=[self.batch_size, classes_num])
         self.testing_interval = config.TESTING_INTERVAL
         self.testing_iterations = config.TESTING_ITERATIONS
 
+        self.labels = tf.placeholder(dtype=tf.uint8, shape=[None, self.classes_num])
+
     def get_ss_loss(self):
-        alpha = 0.9
-        real_labels = tf.concat([self.labels, tf.zeros([self.batch_size, 1], dtype=tf.int32)], axis=1)
-        fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
-                                 alpha*tf.ones([self.batch_size, 1])], axis=1)
-        inv_fake_labels = tf.concat([alpha*tf.ones([self.batch_size, self.classes_num]),
-                                     (1-alpha)*tf.ones([self.batch_size, 1])/self.classes_num], axis=1)
+        labels_size = tf.shape(self.labels)[0]
+        real_labels = tf.concat([self.labels, tf.zeros([labels_size, 1])], axis=1)
+        fake_labels = tf.concat([tf.zeros([self.batch_size, self.classes_num], dtype=tf.float32),
+                                tf.ones([self.batch_size, 1], dtype=tf.float32)], axis=1)
+        # fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
+        #                         alpha*tf.ones([self.batch_size, 1])], axis=1)
+
+        # real_labels = tf.concat([self.labels, tf.zeros([self.batch_size, 1], dtype=tf.int32)], axis=1)
+        # fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
+        #                         alpha*tf.ones([self.batch_size, 1])], axis=1)
+        # inv_fake_labels = tf.concat([alpha*tf.ones([self.batch_size, self.classes_num]),
+        #                            (1-alpha)*tf.ones([self.batch_size, 1])/self.classes_num], axis=1)
 
         g_out_layer, g_out = generator(self.z, True, self.batch_size)
         d_out_layer, d_logits = discriminator(self.input_images, True, reuse=False, classes_num=self.classes_num)
         d_fake_out_layer, d_fake_logits = discriminator(g_out, True, reuse=True, classes_num=self.classes_num)
 
-        # labels will be set for both labeled and unlabeled examples
-        d_loss_real = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_logits, labels=real_labels))
-        d_loss_fake = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=fake_labels))
-        g_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=inv_fake_labels))
+        lab_logits = d_logits[:labels_size, :]
+        unlab_softmax = d_out_layer.outputs[labels_size:, :]
+        fake_softmax = d_fake_out_layer.outputs
+        lab_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=real_labels))
+        unlab_loss = -tf.reduce_mean(tf.log(-unlab_softmax[:, -1] + 1))
+        d_fake_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=fake_labels))
 
-        d_loss = d_loss_real + d_loss_fake
+        d_loss = lab_loss + unlab_loss + d_fake_loss
+        g_loss = tf.reduce_mean(tf.log(fake_softmax[:, -1]))
 
-        return {'d_loss': d_loss, 'g_loss': g_loss, 'd_loss_real': d_loss_real,
-                'd_loss_fake': d_loss_fake}, d_out_layer, g_out_layer
+        return {'d_loss': d_loss, 'g_loss': g_loss}, d_out_layer, g_out_layer
 
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
@@ -73,16 +82,22 @@ class SSGanTrainer(GanTrainer):
         for epoch in xrange(epochs_num):
             self.logger.info("Started epoch %d/%d" % (epoch, epochs_num))
 
-            for batch_counter, (train_examples, train_labels) in enumerate(self.dataset.generate_mb(ds_type='train')):
+            for batch_counter, (train_lab_ex, train_unlab_ex, train_labels) in enumerate(
+                    self.dataset.generate_mb(ds_type='train')):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim]).astype(np.float32)
+                train_examples = np.concatenate((train_lab_ex, train_unlab_ex), axis=0)
+
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_examples, train_labels,
                                                          losses_exprs, batch_z)
                 _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
                 g_loss_val = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
 
-                self.logger.info("Epoch: %d/%d, batch: %d/%d, Discr loss: %.8f, Gen loss: %.8f, global_step: %d" %
-                                 (epoch, epochs_num, batch_counter, batches_num, d_loss_val, g_loss_val,
+                self.logger.info("Epoch: %d/%d, batch: %d/%d, labeled examples: %d, unlabeled_examples: %d, "
+                                 "Discr loss: %.8f, Gen loss: %.8f, global_step: %d" %
+                                 (epoch, epochs_num, batch_counter, batches_num, train_lab_ex.shape[0],
+                                  train_unlab_ex.shape[0], d_loss_val, g_loss_val,
                                   sess.run(global_step)))
+
                 if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
                     self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
                     self.dump_weights(iter_counter, d_out_layer, g_out_layer, sess)
@@ -99,7 +114,9 @@ class SSGanTrainer(GanTrainer):
         d_loss = losses_exprs['d_loss']
 
         _, d_loss_val = sess.run([d_optimizer, d_loss], feed_dict={self.input_images: train_examples,
-                                                                   self.labels: train_labels, self.z: batch_z})
+                                                                   self.labels: train_labels,
+                                                                   self.z: batch_z,
+                                                                   self.labeled_num: train_labels.shape[0]})
 
         return d_loss_val
 
