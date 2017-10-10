@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('how_many_labeled', type=int)
     parser.add_argument('--latent_dim', type=int, default=100)
     parser.add_argument('--epochs_num', type=int, default=100)
-    parser.add_argument('--learning_rate', type=float)
+    parser.add_argument('--learning_rate', type=float, default=1e-4)
     return parser.parse_args()
 
 
