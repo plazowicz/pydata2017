@@ -19,13 +19,13 @@ class SSGanTrainer(GanTrainer):
         self.testing_interval = config.TESTING_INTERVAL
         self.testing_iterations = config.TESTING_ITERATIONS
 
-        self.labels = tf.placeholder(dtype=tf.uint8, shape=[None, self.classes_num])
+        self.labels = tf.placeholder(dtype=tf.float32, shape=[None, self.classes_num])
 
     def get_ss_loss(self):
         labels_size = tf.shape(self.labels)[0]
-        real_labels = tf.concat([self.labels, tf.zeros([labels_size, 1], dtype=tf.uint8)], axis=1)
-        fake_labels = tf.concat([tf.zeros([self.batch_size, self.classes_num], dtype=tf.uint8),
-                                tf.ones([self.batch_size, 1], dtype=tf.uint8)], axis=1)
+        real_labels = tf.concat([self.labels, tf.zeros([labels_size, 1], dtype=tf.float32)], axis=1)
+        fake_labels = tf.concat([tf.zeros([self.batch_size, self.classes_num], dtype=tf.float32),
+                                tf.ones([self.batch_size, 1], dtype=tf.float32)], axis=1)
         # fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
         #                         alpha*tf.ones([self.batch_size, 1])], axis=1)
 

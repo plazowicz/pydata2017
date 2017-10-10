@@ -73,9 +73,9 @@ class CifarDataset(object):
 
     @staticmethod
     def __process_labels(labels):
-        final_labels = np.zeros((len(labels), 10), dtype=np.uint8)
+        final_labels = np.zeros((len(labels), 10), dtype=np.float32)
         for i, l in enumerate(labels):
-            final_labels[i, l] = 1
+            final_labels[i, l] = 1.
         return final_labels
 
     def __nullify_labels(self, labels):
