@@ -40,8 +40,8 @@ class SSGanTrainer(GanTrainer):
         unlab_loss = 0.5 * tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits)) + 0.5 * tf.reduce_mean(
             tf.nn.softplus(fake_log_logits))
 
-        real_features = tf.reduce_mean(d_unlab_previous[0], axis=0)
-        fake_features = tf.reduce_mean(d_fake_previous[0], axis=0)
+        real_features = tf.reduce_mean(d_unlab_previous[0].outputs, axis=0)
+        fake_features = tf.reduce_mean(d_fake_previous[0].outputs, axis=0)
         g_loss = tf.reduce_mean(tf.abs(real_features - fake_features))
 
         d_loss = lab_loss + unlab_loss
@@ -82,12 +82,11 @@ class SSGanTrainer(GanTrainer):
             for batch_counter, (train_lab_ex, train_unlab_ex, train_labels) in enumerate(
                     self.dataset.generate_train_mb()):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.latent_dim]).astype(np.float32)
-                train_examples = np.concatenate((train_lab_ex, train_unlab_ex), axis=0)
 
-                d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_examples, train_labels,
+                d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_lab_ex, train_unlab_ex, train_labels,
                                                          losses_exprs, batch_z)
                 # _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
-                g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_examples, train_labels,
+                g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels,
                                                        losses_exprs, batch_z)
 
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, labeled examples: %d, unlabeled_examples: %d, "
@@ -108,18 +107,20 @@ class SSGanTrainer(GanTrainer):
 
             self.logger.info("Finished epoch %d" % epoch)
 
-    def run_ss_discr_minibatch(self, sess, d_optimizer, train_examples, train_labels, losses_exprs, batch_z):
+    def run_ss_discr_minibatch(self, sess, d_optimizer, lab_train_examples, unlab_train_examples,
+                               train_labels, losses_exprs, batch_z):
 
         d_loss = losses_exprs['d_loss']
-        _, d_loss_val = sess.run([d_optimizer, d_loss], feed_dict={self.input_images: train_examples,
+        _, d_loss_val = sess.run([d_optimizer, d_loss], feed_dict={self.input_images: lab_train_examples,
+                                                                   self.unlabeled_images: unlab_train_examples,
                                                                    self.labels: train_labels,
                                                                    self.z: batch_z})
 
         return d_loss_val
 
-    def run_ss_gen_minibatch(self, sess, g_optimizer, train_examples, train_labels, losses_exprs, batch_z):
+    def run_ss_gen_minibatch(self, sess, g_optimizer, unlab_train_examples, train_labels, losses_exprs, batch_z):
         g_loss = losses_exprs['g_loss']
-        _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.input_images: train_examples,
+        _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.unlabeled_images: unlab_train_examples,
                                                                    self.labels: train_labels,
                                                                    self.z: batch_z})
         return g_loss_val
