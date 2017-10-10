@@ -115,8 +115,7 @@ class SSGanTrainer(GanTrainer):
 
         _, d_loss_val = sess.run([d_optimizer, d_loss], feed_dict={self.input_images: train_examples,
                                                                    self.labels: train_labels,
-                                                                   self.z: batch_z,
-                                                                   self.labeled_num: train_labels.shape[0]})
+                                                                   self.z: batch_z})
 
         return d_loss_val
 
