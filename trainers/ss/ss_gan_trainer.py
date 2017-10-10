@@ -35,18 +35,22 @@ class SSGanTrainer(GanTrainer):
         # inv_fake_labels = tf.concat([alpha*tf.ones([self.batch_size, self.classes_num]),
         #                            (1-alpha)*tf.ones([self.batch_size, 1])/self.classes_num], axis=1)
 
+        def lab_loss():
+            lab_logits = d_logits[:labels_size, :]
+            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=real_labels))
+
         g_out_layer, g_out = generator(self.z, True, self.batch_size)
         d_out_layer, d_logits = discriminator(self.input_images, True, reuse=False, classes_num=self.classes_num)
         d_fake_out_layer, d_fake_logits = discriminator(g_out, True, reuse=True, classes_num=self.classes_num)
 
-        lab_logits = d_logits[:labels_size, :]
         unlab_softmax = d_out_layer.outputs[labels_size:, :]
         fake_softmax = d_fake_out_layer.outputs
-        lab_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=real_labels))
+
         unlab_loss = -tf.reduce_mean(tf.log(-unlab_softmax[:, -1] + 1))
         d_fake_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=fake_labels))
 
-        d_loss = tf.cond(labels_size > 0, lambda: lab_loss + unlab_loss + d_fake_loss, lambda: unlab_loss + d_fake_loss)
+        d_loss = tf.cond(labels_size > 0, lambda: lab_loss() + unlab_loss + d_fake_loss,
+                         lambda: unlab_loss + d_fake_loss)
         g_loss = tf.reduce_mean(tf.log(fake_softmax[:, -1]))
 
         return {'d_loss': d_loss, 'g_loss': g_loss, 'd_unlab_loss': unlab_loss + d_fake_loss}, d_out_layer, g_out_layer
