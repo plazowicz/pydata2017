@@ -9,7 +9,6 @@ from utils.train_utils import adam_learning_options
 
 
 class SSGanTrainer(GanTrainer):
-
     def __init__(self, latent_dim, dataset, classes_num, out_weights_dir, batch_size=64,
                  train_options=adam_learning_options()):
         super(SSGanTrainer, self).__init__(latent_dim, dataset, out_weights_dir, batch_size, train_options)
@@ -23,37 +22,32 @@ class SSGanTrainer(GanTrainer):
 
     def get_ss_loss(self):
         labels_size = tf.shape(self.labels)[0]
-        real_labels = tf.concat([self.labels, tf.zeros([labels_size, 1], dtype=tf.float32)], axis=1)
-        fake_labels = tf.concat([tf.zeros([self.batch_size, self.classes_num], dtype=tf.float32),
-                                tf.ones([self.batch_size, 1], dtype=tf.float32)], axis=1)
-        # fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
-        #                         alpha*tf.ones([self.batch_size, 1])], axis=1)
-
-        # real_labels = tf.concat([self.labels, tf.zeros([self.batch_size, 1], dtype=tf.int32)], axis=1)
-        # fake_labels = tf.concat([(1-alpha)*tf.ones([self.batch_size, self.classes_num])/self.classes_num,
-        #                         alpha*tf.ones([self.batch_size, 1])], axis=1)
-        # inv_fake_labels = tf.concat([alpha*tf.ones([self.batch_size, self.classes_num]),
-        #                            (1-alpha)*tf.ones([self.batch_size, 1])/self.classes_num], axis=1)
 
         def lab_loss():
             lab_logits = d_logits[:labels_size, :]
-            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=real_labels))
+            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=lab_logits, labels=self.labels))
 
         g_out_layer, g_out = generator(self.z, True, self.batch_size)
-        d_out_layer, d_logits = discriminator(self.input_images, True, reuse=False, classes_num=self.classes_num)
-        d_fake_out_layer, d_fake_logits = discriminator(g_out, True, reuse=True, classes_num=self.classes_num)
+        d_out_layer, d_logits, d_previous = discriminator(self.input_images, True, reuse=False,
+                                                          classes_num=self.classes_num, return_previous=True)
+        d_fake_out_layer, d_fake_logits, d_fake_previous = discriminator(g_out, True, reuse=True,
+                                                                         classes_num=self.classes_num,
+                                                                         return_previous=True)
 
-        unlab_softmax = d_out_layer.outputs[labels_size:, :]
-        fake_softmax = d_fake_out_layer.outputs
+        unlab_logits = d_logits[labels_size:, :]
+        unlab_log_logits = tf.reduce_logsumexp(unlab_logits, axis=1)
+        fake_log_logits = tf.reduce_logsumexp(d_fake_logits, axis=1)
 
-        unlab_loss = -tf.reduce_mean(tf.log(-unlab_softmax[:, -1] + 1))
-        d_fake_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=fake_labels))
+        unlab_loss = tf.reduce_mean(-unlab_log_logits + tf.nn.softplus(unlab_log_logits) +
+                                    tf.nn.softplus(fake_log_logits))
 
-        d_loss = tf.cond(labels_size > 0, lambda: lab_loss() + unlab_loss + d_fake_loss,
-                         lambda: unlab_loss + d_fake_loss)
-        g_loss = tf.reduce_mean(tf.log(fake_softmax[:, -1]))
+        real_features = tf.reduce_mean(d_previous[0].outputs[labels_size:, 0], axis=0)
+        fake_features = tf.reduce_mean(d_fake_previous[0].outputs[labels_size:, 0], axis=0)
+        g_loss = tf.reduce_mean(tf.abs(real_features - fake_features))
 
-        return {'d_loss': d_loss, 'g_loss': g_loss, 'd_unlab_loss': unlab_loss + d_fake_loss}, d_out_layer, g_out_layer
+        d_loss = tf.cond(labels_size > 0, lambda: lab_loss() + unlab_loss, lambda: unlab_loss)
+
+        return {'d_loss': d_loss, 'g_loss': g_loss}, d_out_layer, g_out_layer
 
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
@@ -71,11 +65,11 @@ class SSGanTrainer(GanTrainer):
             d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
                                                           learning_rate=lr * 0.5,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
-                                                          clip_gradients=20.0, variables=d_vars)
+                                                          variables=d_vars)
             g_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['g_loss'], global_step=global_step,
                                                           learning_rate=lr,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
-                                                          clip_gradients=20.0, variables=g_vars)
+                                                          variables=g_vars)
 
         self.logger.info("GAN graph is ready")
         sess = tf.InteractiveSession()
@@ -125,7 +119,7 @@ class SSGanTrainer(GanTrainer):
 
     def __test_discriminator(self, iter_num, sess, d_out_layer):
         acc = 0.
-        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(d_out_layer.outputs[:, :self.classes_num], 1),
+        acc_func = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(d_out_layer.outputs, 1),
                                                    tf.argmax(self.labels, 1)), tf.float32))
 
         for test_iter, (test_batch, test_labels) in enumerate(self.dataset.generate_mb(ds_type='test')):
@@ -135,7 +129,5 @@ class SSGanTrainer(GanTrainer):
             self.logger.info("Test iteration: %d, accuracy = %.8f" % (test_iter, batch_acc))
             acc += batch_acc
 
-        self.logger.info("Accuracy for %d iterations: %.8f" % (iter_num, acc/iter_num))
-        return acc/iter_num
-
-
+        self.logger.info("Accuracy for %d iterations: %.8f" % (iter_num, acc / iter_num))
+        return acc / iter_num

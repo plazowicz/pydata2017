@@ -15,7 +15,7 @@ def generator(input_placeholder, train_mode, batch_size, reuse=False):
     return celeb_gan.generator(input_placeholder, train_mode, image_size, batch_size, reuse=reuse, filters_num=64)
 
 
-def discriminator(input_placeholder, train_mode, reuse=False, classes_num=10):
+def discriminator(input_placeholder, train_mode, reuse=False, classes_num=10, return_previous=False):
     filters_num = 64
     w_init = tf.random_normal_initializer(stddev=0.02)
     gamma_init = tf.random_normal_initializer(1., 0.02)
@@ -42,11 +42,15 @@ def discriminator(input_placeholder, train_mode, reuse=False, classes_num=10):
         conv7_layer = bn(conv(conv6_layer, filters_num * 3, 'discr/conv7'), 'discr/bn7')
         flat_layer = FlattenLayer(conv7_layer, name='discr/flatten')
 
-        out_layer = DenseLayer(flat_layer, n_units=classes_num+1, act=tf.identity, name='discr/out')
+        out_layer = DenseLayer(flat_layer, n_units=classes_num, act=tf.identity, name='discr/out')
         logits = out_layer.outputs
         out_layer.outputs = tf.nn.softmax(logits)
 
-    return out_layer, logits
+    if not return_previous:
+        return out_layer, logits
+    else:
+        return out_layer, logits, [flat_layer, conv7_layer, conv6_layer, conv5_layer, conv4_layer, conv3_layer,
+                                   conv2_layer, conv1_layer]
 
 
 # @log
