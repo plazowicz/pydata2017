@@ -28,7 +28,7 @@ class SupCnnTrainer(object):
         global_step = tf.Variable(0, trainable=False)
         ds_size = self.dataset.size()
         batches_num = int(ds_size / float(self.batch_size))
-        decay_steps = (5 * int(ds_size / float(self.batch_size)))
+        decay_steps = ((epochs_num // 5) * int(ds_size / float(self.batch_size)))
         self.logger.info("Decay steps = %d" % decay_steps)
 
         lr = tf.train.exponential_decay(init_lr, global_step=global_step, decay_steps=decay_steps,
