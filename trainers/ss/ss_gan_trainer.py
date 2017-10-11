@@ -51,8 +51,9 @@ class SSGanTrainer(GanTrainer):
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
         global_step = tf.Variable(0, trainable=False)
+        decay_steps = (2*(epochs_num // 5) * int(self.dataset.size() / float(self.batch_size)))
 
-        lr = tf.train.exponential_decay(learning_rate=self.train_options['lr'], decay_steps=30000, decay_rate=0.5,
+        lr = tf.train.exponential_decay(learning_rate=self.train_options['lr'], decay_steps=decay_steps, decay_rate=0.5,
                                         staircase=True, global_step=global_step)
 
         self.logger.info("Composing GAN computation graph ...")
@@ -61,6 +62,7 @@ class SSGanTrainer(GanTrainer):
 
             test_d_out_layer, _ = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
             d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
+            d_param_avg = [tf.Variable(0. * p) for p in d_vars]
             d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
                                                           learning_rate=lr,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
@@ -85,15 +87,18 @@ class SSGanTrainer(GanTrainer):
 
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_lab_ex, train_unlab_ex, train_labels,
                                                          losses_exprs, batch_z)
-                # _ = self.run_gen_minibatch(sess, g_optimizer, losses_exprs, batch_z)
+                d_param_avg = [tf.assign_add(a, 0.0001*(p-a)) for a, p in zip(d_param_avg, d_vars)]
+
+                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels, losses_exprs, batch_z)
+                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels, losses_exprs, batch_z)
                 g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels,
                                                        losses_exprs, batch_z)
 
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, labeled examples: %d, unlabeled_examples: %d, "
-                                 "Discr loss: %.8f, Gen loss: %.8f, global_step: %d" %
+                                 "Discr loss: %.8f, Gen loss: %.8f, global_step: %d, learning rate: %.8f" %
                                  (epoch, epochs_num, batch_counter, batches_num, train_lab_ex.shape[0],
                                   train_unlab_ex.shape[0], d_loss_val, g_loss_val,
-                                  sess.run(global_step)))
+                                  sess.run(global_step), sess.run(lr)))
 
                 if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
                     self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
