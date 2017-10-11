@@ -55,8 +55,8 @@ class SupCnnTrainer(object):
                                                                                      self.labels: train_labels})
 
                 current_step = global_step.eval(sess)
-                self.logger.info("Epoch: %d/%d, batch: %d/%d, Class. loss: %.8f, global step: %d, lr: %s" % (epoch,
-                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step, str(sess.run(lr))))
+                self.logger.info("Epoch: %d/%d, batch: %d/%d, Class. loss: %.8f, global step: %d" % (epoch,
+                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step))
 
                 if current_step % testing_interval == 0:
                     self.__test_cnn(sess, test_model_out_layer)
