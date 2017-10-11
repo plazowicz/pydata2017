@@ -39,7 +39,8 @@ class SupCnnTrainer(object):
             model_out_layer.print_params(False)
             test_model_out_layer, _ = self.create_model_func(self.input_images, False, True, self.classes_num)
 
-            softmax_loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=model_logits)
+            softmax_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
+                                                                                  logits=model_logits))
             cnn_vars = tl.layers.get_variables_with_name("discriminator", True, True)
             optimizer = tf.train.AdamOptimizer(learning_rate=lr, beta1=self.train_options['beta1']).minimize(
                 softmax_loss, var_list=cnn_vars, global_step=global_step)
@@ -55,8 +56,8 @@ class SupCnnTrainer(object):
                                                                                      self.labels: train_labels})
 
                 current_step = global_step.eval(sess)
-                self.logger.info("Epoch: %d/%d, batch: %d/%d, Class. loss: %.8f, global step: %d" % (epoch,
-                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step))
+                self.logger.info("Epoch: %d/%d, batch: %d/%d, Class. loss: %.8f, global step: %d, lr: %.8f" % (epoch,
+                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step, lr.eval(sess)))
 
                 if current_step % testing_interval == 0:
                     self.__test_cnn(sess, test_model_out_layer)
