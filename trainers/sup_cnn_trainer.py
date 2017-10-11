@@ -31,7 +31,8 @@ class SupCnnTrainer(object):
         decay_steps = (5 * int(ds_size / float(self.batch_size)))
         self.logger.info("Decay steps = %d" % decay_steps)
 
-        lr = tf.train.exponential_decay(init_lr, global_step=global_step, decay_steps=decay_steps, decay_rate=0.5)
+        lr = tf.train.exponential_decay(init_lr, global_step=global_step, decay_steps=decay_steps,
+                                        decay_rate=0.5, staircase=True)
 
         self.logger.info("Composing CNN graph ...")
         with tf.device("/gpu:%d" % config.GPU_ID):
