@@ -89,9 +89,9 @@ class SSGanTrainer(GanTrainer):
                                                          losses_exprs, batch_z)
                 d_param_avg = [tf.assign_add(a, 0.0001*(p-a)) for a, p in zip(d_param_avg, d_vars)]
 
-                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels, losses_exprs, batch_z)
-                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels, losses_exprs, batch_z)
-                g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, train_labels,
+                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, losses_exprs, batch_z)
+                self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, losses_exprs, batch_z)
+                g_loss_val = self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex,
                                                        losses_exprs, batch_z)
 
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, labeled examples: %d, unlabeled_examples: %d, "
@@ -123,10 +123,9 @@ class SSGanTrainer(GanTrainer):
 
         return d_loss_val
 
-    def run_ss_gen_minibatch(self, sess, g_optimizer, unlab_train_examples, train_labels, losses_exprs, batch_z):
+    def run_ss_gen_minibatch(self, sess, g_optimizer, unlab_train_examples, losses_exprs, batch_z):
         g_loss = losses_exprs['g_loss']
         _, g_loss_val = sess.run([g_optimizer, g_loss], feed_dict={self.unlabeled_images: unlab_train_examples,
-                                                                   self.labels: train_labels,
                                                                    self.z: batch_z})
         return g_loss_val
 
