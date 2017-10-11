@@ -24,14 +24,14 @@ class SupCnnTrainer(object):
         self.logger.info("Initialization finished, dataset size = %d" % dataset.size())
 
     def train(self, epochs_num, testing_interval):
-        lr = self.train_options['lr']
+        init_lr = self.train_options['lr']
         global_step = tf.Variable(0, trainable=False)
         ds_size = self.dataset.size()
         batches_num = int(ds_size / float(self.batch_size))
         decay_steps = (5 * int(ds_size / float(self.batch_size)))
         self.logger.info("Decay steps = %d" % decay_steps)
 
-        lr = tf.train.exponential_decay(lr, global_step=global_step, decay_steps=decay_steps, decay_rate=0.5)
+        lr = tf.train.exponential_decay(init_lr, global_step=global_step, decay_steps=decay_steps, decay_rate=0.5)
 
         self.logger.info("Composing CNN graph ...")
         with tf.device("/gpu:%d" % config.GPU_ID):
@@ -56,7 +56,7 @@ class SupCnnTrainer(object):
 
                 current_step = global_step.eval(sess)
                 self.logger.info("Epoch: %d/%d, batch: %d/%d, Class. loss: %.8f, global step: %d, lr: %.8f" % (epoch,
-                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step, sess.run(lr)))
+                    epochs_num, batch_counter, batches_num, softmax_loss_val, current_step, sess.run(lr)[0]))
 
                 if current_step % testing_interval == 0:
                     self.__test_cnn(sess, test_model_out_layer)
