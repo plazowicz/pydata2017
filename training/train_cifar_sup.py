@@ -26,7 +26,6 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('cifar_ds_path')
-    parser.add_argument('out_weights_dir')
     parser.add_argument('how_many_labeled', type=int)
     parser.add_argument('--epochs_num', type=int, default=100)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
