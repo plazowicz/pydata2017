@@ -50,7 +50,7 @@ class SupCnnTrainer(object):
         for epoch in xrange(epochs_num):
             self.logger.info("Epoch %d/%d" % (epoch, epochs_num))
 
-            for batch_counter, (train_examples, train_labels) in self.dataset.generate_train_mb():
+            for batch_counter, (train_examples, train_labels) in enumerate(self.dataset.generate_train_mb()):
                 _, softmax_loss_val = sess.run([optimizer, softmax_loss], feed_dict={self.input_images: train_examples,
                                                                                      self.labels: train_labels})
 
