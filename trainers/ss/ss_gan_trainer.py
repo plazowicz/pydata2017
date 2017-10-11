@@ -62,7 +62,6 @@ class SSGanTrainer(GanTrainer):
 
             test_d_out_layer, _ = discriminator(self.input_images, False, reuse=True, classes_num=self.classes_num)
             d_vars, g_vars = self.extract_params(d_out_layer, g_out_layer)
-            d_param_avg = [tf.Variable(0. * p) for p in d_vars]
             d_optimizer = tf.contrib.layers.optimize_loss(loss=losses_exprs['d_loss'], global_step=global_step,
                                                           learning_rate=lr,
                                                           optimizer=tf.train.AdamOptimizer(beta1=beta1),
@@ -87,7 +86,6 @@ class SSGanTrainer(GanTrainer):
 
                 d_loss_val = self.run_ss_discr_minibatch(sess, d_optimizer, train_lab_ex, train_unlab_ex, train_labels,
                                                          losses_exprs, batch_z)
-                d_param_avg = [tf.assign_add(a, 0.0001*(p-a)) for a, p in zip(d_param_avg, d_vars)]
 
                 self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, losses_exprs, batch_z)
                 self.run_ss_gen_minibatch(sess, g_optimizer, train_unlab_ex, losses_exprs, batch_z)
