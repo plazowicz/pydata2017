@@ -51,7 +51,7 @@ class SSGanTrainer(GanTrainer):
     def train_ss(self, epochs_num):
         iter_counter, beta1 = 0, self.train_options['beta1']
         global_step = tf.Variable(0, trainable=False)
-        decay_steps = (2*(epochs_num // 5) * int(self.dataset.size() / float(self.batch_size)))
+        decay_steps = (4*(epochs_num // 5) * int(self.dataset.size() / float(self.batch_size)))
 
         lr = tf.train.exponential_decay(learning_rate=self.train_options['lr'], decay_steps=decay_steps, decay_rate=0.5,
                                         staircase=True, global_step=global_step)
