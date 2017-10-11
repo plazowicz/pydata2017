@@ -139,7 +139,7 @@ class CifarDataset(object):
 
 class SupervisedCifarDataset(CifarDataset):
 
-    def generate_test_mb(self):
+    def generate_train_mb(self):
         train_size = self.lab_data.shape[0]
         for i in xrange(0, train_size, self.batch_size):
             lab_data_batch = self.lab_data[i: i + self.batch_size, :, :, :]
