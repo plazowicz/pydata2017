@@ -26,6 +26,9 @@ class CifarDataset(object):
 
         self.rng = np.random.RandomState()
 
+    def classes_num(self):
+        return 10
+
     def generate_train_mb(self):
         train_size = self.unlab_data.shape[0]
         inds = self.rng.permutation(train_size)
@@ -36,26 +39,29 @@ class CifarDataset(object):
             lab_data_batch = lab_data[i: i + self.batch_size, :, :, :]
             unlab_data_batch = unlab_data[i: i + self.batch_size, :, :, :]
             labels_batch = labels[i: i + self.batch_size]
+            lab_data_batch, labels_batch = self.fill_batch(lab_data_batch, labels_batch, lab_data, labels)
 
-            if lab_data_batch.shape[0] < self.batch_size:
-                labels_batch = np.concatenate((labels_batch, labels[0: self.batch_size - lab_data_batch.shape[0]]),
-                                              axis=0)
-                lab_data_batch = np.concatenate((lab_data_batch, lab_data[0: self.batch_size -
-                                                                        lab_data_batch.shape[0]]), axis=0)
             if unlab_data_batch.shape[0] < self.batch_size:
                 unlab_data_batch = np.concatenate((unlab_data_batch, unlab_data[0: self.batch_size -
-                                                                            unlab_data_batch.shape[0]]), axis=0)
+                                                                                   unlab_data_batch.shape[0]]), axis=0)
 
             yield bound_image_values(lab_data_batch).astype(np.float32), \
-                  bound_image_values(unlab_data_batch).astype(np.float32), self.__process_labels(labels_batch)
+                  bound_image_values(unlab_data_batch).astype(np.float32), self.one_hot_labels(labels_batch)
 
     def generate_test_mb(self):
         for i in xrange(0, self.test_data.shape[0], self.batch_size):
             data_batch = self.test_data[i: i + self.batch_size, :, :, :]
             labels_batch = self.test_labels[i: i + self.batch_size]
 
+            data_batch, labels_batch = self.fill_batch(data_batch, labels_batch, self.test_data, self.test_labels)
             data_batch = bound_image_values(data_batch).astype(np.float32)
-            yield data_batch, self.__process_labels(labels_batch)
+            yield data_batch, self.one_hot_labels(labels_batch)
+
+    def fill_batch(self, data_batch, labels_batch, data, labels):
+        if data_batch.shape[0] < self.batch_size:
+            labels_batch = np.concatenate((labels_batch, labels[0: self.batch_size - data_batch.shape[0]]), axis=0)
+            data_batch = np.concatenate((data_batch, data[0: self.batch_size - data_batch.shape[0]]), axis=0)
+        return data_batch, labels_batch
 
     def extend_labeled_data(self, lab_data, labels, unlab_data):
         lab_x, lab_y = [], []
@@ -85,7 +91,7 @@ class CifarDataset(object):
         return train_data, self.__nullify_labels(train_labels)
 
     @staticmethod
-    def __process_labels(labels):
+    def one_hot_labels(labels):
         final_labels = np.zeros((len(labels), 10), dtype=np.float32)
         for i, l in enumerate(labels):
             final_labels[i, l] = 1.
@@ -129,3 +135,17 @@ class CifarDataset(object):
         data = data.reshape((data.shape[0], 3, 32, 32))
         data = data.transpose((0, 2, 3, 1))
         return data, labels
+
+
+class SupervisedCifarDataset(CifarDataset):
+
+    def generate_test_mb(self):
+        train_size = self.lab_data.shape[0]
+        for i in xrange(0, train_size, self.batch_size):
+            lab_data_batch = self.lab_data[i: i + self.batch_size, :, :, :]
+            labels_batch = self.labels[i: i + self.batch_size]
+            lab_data_batch, labels_batch = self.fill_batch(lab_data_batch, labels_batch, self.lab_data, self.labels)
+            yield bound_image_values(lab_data_batch).astype(np.float32), self.one_hot_labels(labels_batch)
+
+    def size(self):
+        return self.lab_data.shape[0]
