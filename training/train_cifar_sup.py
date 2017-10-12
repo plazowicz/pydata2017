@@ -2,7 +2,7 @@ import argparse
 
 from models.ss.cifar10_gan import discriminator
 from trainers.sup_cnn_trainer import SupCnnTrainer
-from transformers.cifar import SupervisedCifarDataset
+from datasets.cifar import SupervisedCifarDataset
 from utils.train_utils import adam_learning_options
 
 

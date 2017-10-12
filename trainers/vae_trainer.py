@@ -2,7 +2,6 @@ import os.path as op
 
 import tensorflow as tf
 import tensorlayer as tl
-import numpy as np
 
 from models.celeb_vae import encoder, generator
 from utils.train_utils import adam_learning_options
@@ -12,10 +11,10 @@ import config
 
 @log
 class VaeTrainer(object):
-    def __init__(self, latent_dim, transformer, out_weights_dir,
-                 train_options=adam_learning_options()):
+    def __init__(self, latent_dim, dataset, out_weights_dir,
+                 train_options=adam_learning_options(), kl_loss_weight=0.0005):
         self.out_weights_dir = out_weights_dir
-        self.transformer = transformer
+        self.transformer = dataset
         self.train_options = train_options
         self.latent_dim = latent_dim
         self.batch_size = 64
@@ -26,6 +25,7 @@ class VaeTrainer(object):
         self.input_images = tf.placeholder(tf.float32, shape=[self.batch_size, self.img_size, self.img_size, 3],
                                            name='input_images')
 
+        self.kl_loss_weights = kl_loss_weight
         self.weights_dump_interval = config.WEIGHTS_DUMP_INTERVAL
 
     def get_loss(self):
@@ -40,7 +40,7 @@ class VaeTrainer(object):
         kl_loss = tf.reduce_mean(- 0.5 * tf.reduce_sum(1 + z_cov_log_sq - tf.square(z_mean)
                                                        - tf.exp(z_cov_log_sq), 1))
 
-        vae_loss = sse_loss + kl_loss
+        vae_loss = sse_loss + self.kl_loss_weight*kl_loss
         return {'vae': vae_loss, 'sse': sse_loss, 'kl': kl_loss}, mean_out, cov_out, gen_out
 
     def extract_params(self, mean_out, cov_out, gen_out):
@@ -56,7 +56,7 @@ class VaeTrainer(object):
 
         return vae_vars
 
-    def train(self, images_file_list, epochs_num):
+    def train(self, epochs_num):
         lr = self.train_options['lr']
         self.logger.info("Composing VAE loss computation graph ...")
 
@@ -72,39 +72,32 @@ class VaeTrainer(object):
 
         sess = tf.InteractiveSession()
         tl.layers.initialize_global_variables(sess)
-        batches_num = len(images_file_list) // self.batch_size
+        ds_size = self.dataset.size()
+        batches_num = len(ds_size) // self.batch_size
 
         iter_counter = 0
 
         for epoch in xrange(epochs_num):
-            try:
+            for batch_counter, train_examples in enumerate(self.dataset.generate_train_mb()):
                 self.logger.info("Started %d/%d epoch" % (epoch, epochs_num))
-                batch_counter, mini_batch_it = 0, tl.iterate.minibatches(images_file_list, targets=images_file_list,
-                                                                         batch_size=self.batch_size)
-                while True:
-                    batch_img_files, _ = mini_batch_it.next()
-                    losses_vals = self.__run_minibatch(sess, optimizer, batch_img_files, losses_exprs)
+                losses_vals = self.__run_minibatch(sess, optimizer, train_examples, losses_exprs)
 
-                    self.logger.info("Epoch: %d/%d, batch: %d/%d, VAE loss: %.8f, SSE loss: %.8f, KL loss: .%8f" %
-                                     (epoch, epochs_num, batch_counter, batches_num, losses_vals['vae'],
-                                      losses_vals['sse'], losses_vals['kl']))
+                self.logger.info("Epoch: %d/%d, batch: %d/%d, VAE loss: %.8f, SSE loss: %.8f, KL loss: .%8f" %
+                                 (epoch, epochs_num, batch_counter, batches_num, losses_vals['vae'],
+                                  losses_vals['sse'], losses_vals['kl']))
 
-                    if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
-                        self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
-                        self.__dump_weights(iter_counter, mean_out, cov_out, gen_out, sess)
+                if iter_counter % self.weights_dump_interval == 0 and iter_counter > 0:
+                    self.logger.info("Iteration %d, dumping parameters ..." % iter_counter)
+                    self.__dump_weights(iter_counter, mean_out, cov_out, gen_out, sess)
 
-                    batch_counter += 1
-                    iter_counter += 1
-            except StopIteration:
-                self.logger.info("Finished epoch %d" % epoch)
+                iter_counter += 1
+            self.logger.info("Finished epoch %d" % epoch)
 
-    def __run_minibatch(self, sess, optimizer, batch_img_files, losses_exprs):
-        batch_img = [self.transformer.get_img(img_file) for img_file in batch_img_files]
-        batch_img = np.array(batch_img, dtype=np.float32)
+    def __run_minibatch(self, sess, optimizer, train_examples, losses_exprs):
 
         vae_loss, sse_loss, kl_loss = losses_exprs['vae'], losses_exprs['sse'], losses_exprs['kl']
         vae_val, sse_val, kl_val, _ = sess.run([vae_loss, sse_loss, kl_loss, optimizer],
-                                               feed_dict={self.input_images: batch_img})
+                                               feed_dict={self.input_images: train_examples})
 
         return {'vae': vae_val, 'sse': sse_val, 'kl': kl_val}
 

@@ -7,7 +7,7 @@ import tensorflow as tf
 import tensorlayer as tl
 
 import config
-from transformers.celeb import CelebDsTransformer
+from datasets.celeb import CelebDataset
 from models.celeb_vae import read_settings_from_weights, load_enc_with_weights, load_gen_with_weights
 from utils import fs_utils
 from utils.logger import log
@@ -25,7 +25,7 @@ class VaeCelebFacesGenerator(object):
         self.crop_size = crop_size
 
         self.enc_path, self.gen_path = self.__enc_gen_weights_paths()
-        self.transformer = self.__get_transformer()
+        self.celeb_ds = self.__get_celeb_ds()
         self.z_dim, self.img_size, _ = read_settings_from_weights(self.enc_path, self.gen_path)
 
     def reconstruct_faces(self, out_path):
@@ -50,7 +50,7 @@ class VaeCelebFacesGenerator(object):
 
         reconstr_images = []
         for i, img_path in enumerate(img_paths_to_reconstruct):
-            preprocessed_img = self.transformer.get_img(img_path)
+            preprocessed_img = self.celeb_ds.get_img(img_path)
             reconstr_img = sess.run(x_reconstr, feed_dict={input_images: [preprocessed_img]})
             reconstr_images.append(reconstr_img[0])
 
@@ -89,9 +89,9 @@ class VaeCelebFacesGenerator(object):
         gen_path = op.join(self.out_weights_dir, "vae_gen_%d.npz" % self.from_iteration)
         return enc_path, gen_path
 
-    def __get_transformer(self):
+    def __get_celeb_ds(self):
         z_dim, img_size, _ = read_settings_from_weights(self.enc_path, self.gen_path)
-        return CelebDsTransformer(self.crop_size, img_size)
+        return CelebDataset(self.crop_size, img_size, None, None)
 
     def __save_original_images(self, images_paths, out_path):
         imgs = []
@@ -108,8 +108,9 @@ class VaeCelebFacesGenerator(object):
 
         cv2.imwrite(out_path, big_img)
 
-    def __save_gen_images(self, gen_images_list, out_path):
-        imgs = [self.transformer.inverse_transform(gen_img) for gen_img in gen_images_list]
+    @staticmethod
+    def __save_gen_images(gen_images_list, out_path):
+        imgs = [img_ops.unbound_image_values(gen_img) for gen_img in gen_images_list]
         imgs = np.array(imgs)
         grid_size = int(np.sqrt(imgs.shape[0]))
         big_img = img_ops.merge_images_to_grid(imgs, (grid_size, grid_size))

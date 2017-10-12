@@ -11,7 +11,13 @@ def center_crop(img_arr, crop_h, crop_w):
 
 # Pixel from [0,255] to [-1,1]
 def bound_image_values(img_arr):
-    return img_arr/127.5 - 1
+    return img_arr / 127.5 - 1
+
+
+def unbound_image_values(gen_img):
+    img_0_1_bounded = (gen_img + 1.) / 2.
+    img_0_255_bounded = (img_0_1_bounded * 255.).astype(np.uint8)
+    return img_0_255_bounded
 
 
 def merge_images_to_grid(images, grid_size):

@@ -149,3 +149,18 @@ class SupervisedCifarDataset(CifarDataset):
 
     def size(self):
         return self.lab_data.shape[0]
+
+
+class UnsupervisedCifarDataSet(CifarDataset):
+
+    def __init__(self, cifar_ds_path, batch_size):
+        super(UnsupervisedCifarDataSet, self).__init__(cifar_ds_path, batch_size, 1000)
+
+    def generate_train_mb(self):
+        train_size = self.unlab_data.shape[0]
+        for i in xrange(0, train_size, self.batch_size):
+            data_batch = self.unlab_data[i: i + self.batch_size, :, :, :]
+            if data_batch.shape[0] < self.batch_size:
+                data_batch = np.concatenate((data_batch,
+                                             self.unlab_data[0: self.batch_size - data_batch.shape[0], :, :, :]))
+            yield data_batch

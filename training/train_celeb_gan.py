@@ -4,13 +4,13 @@ import config
 from utils.fs_utils import load_celeb_files, create_dir_if_not_exists
 
 from trainers.gan_trainer import GanTrainer
-from transformers.celeb import CelebDsTransformer
+from datasets.celeb import CelebDataset
 
 
 def train_celeb_gan(args):
-    transformer = CelebDsTransformer(args.crop_size, args.image_size)
-    trainer = GanTrainer(args.latent_dim, transformer, args.out_weights_dir)
     celeb_files_list = load_celeb_files(args.celeb_faces_dir)
+    transformer = CelebDataset(args.crop_size, args.image_size, celeb_files_list, 64)
+    trainer = GanTrainer(args.latent_dim, transformer, args.out_weights_dir)
     print("Found %d celeb images" % len(celeb_files_list))
     trainer.train(celeb_files_list, args.epochs_num)
 

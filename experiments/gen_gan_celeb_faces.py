@@ -8,7 +8,6 @@ import cv2
 import config
 from models.celeb_gan import load_gen_with_weights, read_settings_with_weights
 from utils.logger import log
-from transformers.celeb import CelebDsTransformer
 from utils import img_ops
 
 
@@ -23,7 +22,6 @@ class GanCelebFacesGenerator(object):
 
         _, self.gen_weights_path = self.__discr_gen_weights_path()
         _, self.z_dim = read_settings_with_weights(self.gen_weights_path)
-        self.transformer = CelebDsTransformer(None, None)
 
     def generate_faces(self, out_path):
         sess = tf.InteractiveSession()
@@ -46,8 +44,9 @@ class GanCelebFacesGenerator(object):
         gen_params_path = op.join(self.out_weights_dir, "gan_gen_%d.npz" % self.from_iteration)
         return discr_params_path, gen_params_path
 
-    def __save_gen_images(self, gen_images_list, out_path):
-        imgs = [self.transformer.inverse_transform(gen_img) for gen_img in gen_images_list]
+    @staticmethod
+    def __save_gen_images(gen_images_list, out_path):
+        imgs = [img_ops.unbound_image_values(gen_img) for gen_img in gen_images_list]
         imgs = np.array(imgs)
         grid_size = int(np.sqrt(imgs.shape[0]))
         big_img = img_ops.merge_images_to_grid(imgs, (grid_size, grid_size))

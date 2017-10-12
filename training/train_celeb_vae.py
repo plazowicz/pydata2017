@@ -1,20 +1,19 @@
-import os.path as op
-
 import argparse
 import config
+
 from trainers.vae_trainer import VaeTrainer
-from transformers.celeb import CelebDsTransformer
+from datasets.celeb import CelebDataset
 
 from utils import fs_utils
 
 
 def train_celeb_vae(args):
-    transformer = CelebDsTransformer(args.crop_size, args.image_size)
+    celeb_files_list = fs_utils.load_celeb_files(args.celeb_faces_dir)
+    transformer = CelebDataset(args.crop_size, args.image_size, celeb_files_list, 64)
     trainer = VaeTrainer(args.latent_dim, transformer, args.out_weights_dir)
 
-    celeb_files_list = fs_utils.load_celeb_files(args.celeb_faces_dir)
     print("Found %d celeb images" % len(celeb_files_list))
-    trainer.train(celeb_files_list, args.epochs_num)
+    trainer.train(args.epochs_num)
 
 
 def main():

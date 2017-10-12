@@ -1,7 +1,7 @@
 import argparse
 
 from trainers.ss.ss_gan_trainer import SSGanTrainer
-from transformers.cifar import CifarDataset
+from datasets.cifar import CifarDataset
 from utils.train_utils import adam_learning_options
 
 
