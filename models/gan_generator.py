@@ -18,7 +18,6 @@ class GanImgGenerator(object):
                  get_latent_dim_func=net_utils.read_latent_dim_from_gen_weights):
         self.samples_num = samples_num
 
-        _, self.gen_weights_path = self.__discr_gen_weights_path()
         self.gen_weights_path = net_utils.get_gan_generator_weights_path(weights_dir, from_iteration)
         self.load_gen_weights_func = load_gen_weights_func
         self.z_dim = get_latent_dim_func(self.gen_weights_path)
