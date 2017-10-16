@@ -101,7 +101,7 @@ def load_gen_with_weights(sess, gen_input, batch_size, gen_path, reuse=False):
     gen_out_layer, gen_out = generator(gen_input, False, img_size, batch_size, reuse)
 
     tl.files.assign_params(sess, gen_params, gen_out_layer)
-    return gen_out_layer, gen_out, latent_dim
+    return gen_out_layer, gen_out
 
 
 def read_settings_with_weights(gen_path):
