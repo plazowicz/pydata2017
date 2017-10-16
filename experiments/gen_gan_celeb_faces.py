@@ -14,8 +14,7 @@ from utils import img_ops
 @log
 class GanCelebFacesGenerator(object):
 
-    def __init__(self, celeb_faces_dir, samples_num, out_weights_dir, from_iteration):
-        self.celeb_faces_dir = celeb_faces_dir
+    def __init__(self, samples_num, out_weights_dir, from_iteration):
         self.samples_num = samples_num
         self.out_weights_dir = out_weights_dir
         self.from_iteration = from_iteration
@@ -56,7 +55,7 @@ class GanCelebFacesGenerator(object):
 
 def main():
     args = parse_args()
-    celeb_faces_generator = GanCelebFacesGenerator(args.celeb_faces_dir, args.how_many_samples,
+    celeb_faces_generator = GanCelebFacesGenerator(args.how_many_samples,
                                                    args.out_weights_dir, args.from_iteration)
     out_vis_path = args.out_vis_path
     celeb_faces_generator.generate_faces(out_vis_path)
@@ -64,7 +63,6 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--celeb_faces_dir', default=config.CELEB_FACES_DIR)
     parser.add_argument('--how_many_samples', type=int, default=64)
     parser.add_argument('out_weights_dir')
     parser.add_argument('from_iteration', type=int)
