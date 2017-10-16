@@ -1,13 +1,12 @@
 import argparse
-
-from models import celeb_gan
 from models.gan_generator import GanImgGenerator
+from models.ss import cifar10_gan
 
 
 def main():
     args = parse_args()
     celeb_faces_generator = GanImgGenerator(args.how_many_samples, args.out_weights_dir, args.from_iteration,
-                                            celeb_gan.load_gen_with_weights)
+                                            cifar10_gan.load_gen_with_weights)
     out_vis_path = args.out_vis_path
     celeb_faces_generator.generate_faces(out_vis_path)
 

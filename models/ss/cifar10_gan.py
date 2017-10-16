@@ -1,8 +1,7 @@
 import tensorflow as tf
 import tensorlayer as tl
 
-from tensorlayer.layers import InputLayer, Conv2d, BatchNormLayer, FlattenLayer, DenseLayer, \
-    ReshapeLayer, DeConv2d
+from tensorlayer.layers import InputLayer, Conv2d, BatchNormLayer, FlattenLayer, DenseLayer
 
 from utils.logger import log
 
@@ -53,26 +52,23 @@ def discriminator(input_placeholder, train_mode, reuse=False, classes_num=10, re
                                    conv2_layer, conv1_layer]
 
 
-# @log
-# def load_gen_with_weights(sess, gen_input, batch_size, gen_path, reuse=False):
-#     gen_params = tl.files.load_npz(path=gen_path, name='')
-#     img_size, latent_dim = read_settings_with_weights(gen_path)
-#
-#     load_gen_with_weights.logger.info("Loading weights for generator, img size = %d, latent dim = %d" %
-#                                       (img_size, latent_dim))
-#     gen_out_layer, gen_out = generator(gen_input, False, img_size, batch_size, reuse)
-#
-#     tl.files.assign_params(sess, gen_params, gen_out)
-#     return gen_out_layer, gen_out
-#
-#
-# def read_settings_with_weights(gen_path):
-#     import math
-#
-#     gen_params = tl.files.load_npz(path=gen_path, name='')
-#     filters_num = gen_params[-3].shape[0]
-#
-#     dense_layer_out, latent_dim = gen_params[0].shape[1], gen_params[0].shape[0]
-#     img_size = int(math.sqrt(dense_layer_out / (filters_num * 8))) * 16
-#
-#     return img_size, latent_dim
+@log
+def load_gen_with_weights(sess, gen_input, batch_size, gen_path, reuse=False):
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    filters_num, latent_dim = read_settings_with_weights(gen_path)
+
+    load_gen_with_weights.logger.info("Loading weights for  CIFAR generator, latent dim = %d, filters_num = %d" %
+                                      (latent_dim, filters_num))
+    gen_out_layer, gen_out = generator(gen_input, False, batch_size, reuse)
+
+    tl.files.assign_params(sess, gen_params, gen_out_layer)
+    return gen_out_layer, gen_out, latent_dim
+
+
+def read_settings_with_weights(gen_path):
+
+    gen_params = tl.files.load_npz(path=gen_path, name='')
+    filters_num = gen_params[-2].shape[-1]
+    latent_dim = gen_params[0][1]
+
+    return filters_num, latent_dim
