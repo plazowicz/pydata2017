@@ -28,7 +28,7 @@ class GanImgGenerator(object):
         sess = tf.InteractiveSession()
         with tf.device(device_utils.get_device()):
             z = tf.random_uniform(shape=(1, self.z_dim), minval=-1, maxval=1)
-            gen_out, _, z = self.load_gen_weights_func(sess, z, 1, self.gen_weights_path)
+            gen_out, _ = self.load_gen_weights_func(sess, z, 1, self.gen_weights_path)
             x_generated = gen_out.outputs
 
         gen_images = []

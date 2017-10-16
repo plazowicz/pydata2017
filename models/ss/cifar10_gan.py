@@ -69,6 +69,6 @@ def read_settings_with_weights(gen_path):
 
     gen_params = tl.files.load_npz(path=gen_path, name='')
     filters_num = gen_params[-2].shape[-1]
-    latent_dim = gen_params[0][1]
+    latent_dim = gen_params[0].shape[0]
 
     return filters_num, latent_dim
