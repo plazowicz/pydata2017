@@ -163,4 +163,4 @@ class UnsupervisedCifarDataSet(CifarDataset):
             if data_batch.shape[0] < self.batch_size:
                 data_batch = np.concatenate((data_batch,
                                              self.unlab_data[0: self.batch_size - data_batch.shape[0], :, :, :]))
-            yield data_batch
+            yield bound_image_values(data_batch).astype(np.float32)

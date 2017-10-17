@@ -14,14 +14,13 @@ class VaeTrainer(object):
     def __init__(self, latent_dim, dataset, out_weights_dir,
                  train_options=adam_learning_options(), kl_loss_weight=0.0005):
         self.out_weights_dir = out_weights_dir
-        self.transformer = dataset
         self.train_options = train_options
         self.latent_dim = latent_dim
-        self.batch_size = 64
+        self.batch_size = dataset.batch_size()
 
         self.logger.info("Creating output weights directory %s" % self.out_weights_dir)
         tl.files.exists_or_mkdir(out_weights_dir)
-        self.img_size = self.transformer.img_size()
+        self.img_size = dataset.img_size()
         self.input_images = tf.placeholder(tf.float32, shape=[self.batch_size, self.img_size, self.img_size, 3],
                                            name='input_images')
 
