@@ -16,7 +16,7 @@ class VaeTrainer(object):
         self.out_weights_dir = out_weights_dir
         self.train_options = train_options
         self.latent_dim = latent_dim
-        self.batch_size = dataset.batch_size()
+        self.batch_size = dataset.batch_size
 
         self.logger.info("Creating output weights directory %s" % self.out_weights_dir)
         tl.files.exists_or_mkdir(out_weights_dir)
