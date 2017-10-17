@@ -25,7 +25,7 @@ class VaeTrainer(object):
         self.input_images = tf.placeholder(tf.float32, shape=[self.batch_size, self.img_size, self.img_size, 3],
                                            name='input_images')
 
-        self.kl_loss_weights = kl_loss_weight
+        self.kl_loss_weight = kl_loss_weight
         self.weights_dump_interval = config.WEIGHTS_DUMP_INTERVAL
 
     def get_loss(self):
