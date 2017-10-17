@@ -35,9 +35,6 @@ class CifarDataset(object):
     def size(self):
         return self.unlab_data.shape[0]
 
-    def batch_size(self):
-        return self.batch_size
-
     def generate_train_mb(self):
         train_size = self.unlab_data.shape[0]
         inds = self.rng.permutation(train_size)
