@@ -103,26 +103,6 @@ def generator(input_placeholder, train_mode, image_size, reuse=False):
 
 
 @log
-def load_model_with_weights(sess, enc_input, gen_input, enc_path, gen_path):
-
-    enc_params = tl.files.load_npz(path=enc_path, name='')
-    gen_params = tl.files.load_npz(path=gen_path, name='')
-
-    z_dim, img_size, filters_num = read_settings_from_weights(enc_path, gen_path)
-
-    mean_out, cov_out, _, _ = encoder(enc_input, z_dim, False, filters_num)
-    gen_out, _ = generator(gen_input, False, img_size)
-
-    load_model_with_weights.logger.info("Loading weight for encoder and generator, latent dim = %d, "
-                                        "image size = %d, conv filters num = %d" % (z_dim, img_size, filters_num))
-
-    tl.files.assign_params(sess, enc_params[:24], mean_out)
-    tl.files.assign_params(sess, np.concatenate((enc_params[:24], enc_params[30:]), axis=0), cov_out)
-
-    tl.files.assign_params(sess, gen_params, gen_out)
-
-
-@log
 def load_enc_with_weights(sess, enc_input, enc_path, reuse=False):
     enc_params = tl.files.load_npz(path=enc_path, name='')
     z_dim, filters_num = read_enc_settings_with_weights(enc_path)
