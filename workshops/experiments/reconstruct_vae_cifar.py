@@ -5,6 +5,7 @@ import numpy as np
 from datasets.cifar import UnsupervisedCifarDataSet
 from reconstruct_vae_celeb_faces import load_gen_weights, load_enc_weights, get_latent_dim
 from workshops.vae_reconstruction import VaeImgReconstructor
+from utils import img_ops
 
 
 def get_cifar_samples(cifar_ds_path, how_many):
@@ -17,7 +18,8 @@ def main():
     reconstructor = VaeImgReconstructor(load_gen_weights(args.gen_params_path),
                                         load_enc_weights(args.enc_params_path), get_latent_dim(args.gen_params_path))
     cifar_imgs = np.array(get_cifar_samples(args.cifar_ds_path, args.how_many_samples))
-    reconstructor.reconstruct_faces(args.out_vis_path, cifar_imgs)
+    reconstructor.reconstruct_faces(args.out_vis_path, cifar_imgs,
+                                    transformer=lambda x: img_ops.unbound_image_values(x[:, :, ::-1]))
 
 
 def parse_args():

@@ -18,8 +18,6 @@ class VaeImgGenerator(object):
         self.z_dim = get_latent_dim_func(self.gen_params_path)
 
     def generate_images(self, samples_num, out_path, transformer=lambda x: img_ops.unbound_image_values(x)):
-        # TODO - instantiate tf Session
-        # TODO - sample z randomly
         sess = tf.InteractiveSession()
         with tf.device(device_utils.get_device()):
             z = tf.random_normal(shape=[1, self.z_dim], mean=0., stddev=1., dtype=tf.float32)
