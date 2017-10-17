@@ -1,13 +1,13 @@
 import argparse
 
 from models import celeb_vae
-from workshops.img_generation.gan import GanImgGenerator
+from workshops.img_generation.vae import VaeImgGenerator
 from utils import img_ops
 
 
 def main():
     args = parse_args()
-    celeb_faces_generator = GanImgGenerator(args.gen_weights_path, celeb_vae.load_gen_with_weights)
+    celeb_faces_generator = VaeImgGenerator(args.gen_weights_path, celeb_vae.load_gen_with_weights)
     out_vis_path = args.out_vis_path
     celeb_faces_generator.generate_images(args.how_many_samples, out_vis_path,
                                           transformer=lambda x: img_ops.unbound_image_values(x[:, :, ::-1]))

@@ -33,7 +33,7 @@ def merge_images_to_grid(images, grid_size):
 def save_gen_images(gen_images_list, out_path, transformer):
     import cv2
 
-    imgs = [transformer(unbound_image_values(gen_img)) for gen_img in gen_images_list]
+    imgs = [transformer(gen_img) for gen_img in gen_images_list]
     imgs = np.array(imgs)
     grid_size = int(np.sqrt(imgs.shape[0]))
     big_img = merge_images_to_grid(imgs[:grid_size * grid_size], (grid_size, grid_size))
