@@ -14,20 +14,20 @@ from utils import net_utils
 @log
 class GanImgGenerator(object):
 
-    def __init__(self, samples_num, weights_dir, from_iteration, load_gen_weights_func,
+    def __init__(self, samples_num, weights_dir, from_iteration, load_gen_with_weights_func,
                  get_latent_dim_func=net_utils.read_latent_dim_from_gen_weights):
         self.samples_num = samples_num
 
         self.gen_weights_path = net_utils.get_gan_generator_weights_path(weights_dir, from_iteration)
-        self.load_gen_weights_func = load_gen_weights_func
+        self.load_gen_weights_func = load_gen_with_weights_func
         self.z_dim = get_latent_dim_func(self.gen_weights_path)
 
-    def generate_faces(self, out_path, transformer=lambda x: x):
+    def generate_images(self, out_path, transformer=lambda x: x):
         sess = tf.InteractiveSession()
         with tf.device(device_utils.get_device()):
             z = tf.random_uniform(shape=(1, self.z_dim), minval=-1, maxval=1)
-            gen_out, _ = self.load_gen_weights_func(sess, z, 1, self.gen_weights_path)
-            x_generated = gen_out.outputs
+            _, gen_out = self.load_gen_weights_func(sess, z, 1, self.gen_weights_path)
+            x_generated = gen_out
 
         gen_images = []
         for i in xrange(self.samples_num):

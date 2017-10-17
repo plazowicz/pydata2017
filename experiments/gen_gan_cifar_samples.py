@@ -9,7 +9,7 @@ def main():
     celeb_faces_generator = GanImgGenerator(args.how_many_samples, args.out_weights_dir, args.from_iteration,
                                             cifar10_gan.load_gen_with_weights)
     out_vis_path = args.out_vis_path
-    celeb_faces_generator.generate_faces(out_vis_path, transformer)
+    celeb_faces_generator.generate_images(out_vis_path, transformer)
 
 
 def parse_args():
