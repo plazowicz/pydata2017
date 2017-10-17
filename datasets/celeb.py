@@ -32,3 +32,7 @@ class CelebDataset(object):
     def img_size(self):
         return self.out_size
 
+    def batch_size(self):
+        return self.batch_size
+
+
