@@ -27,6 +27,7 @@ class VaeTrainer(object):
 
         self.kl_loss_weight = kl_loss_weight
         self.weights_dump_interval = config.WEIGHTS_DUMP_INTERVAL
+        self.dataset = dataset
 
     def get_loss(self):
         eps = tf.random_normal(shape=(self.batch_size, self.latent_dim), mean=0.0, stddev=1.0)
