@@ -22,7 +22,7 @@ class VaeImgGenerator(object):
         # TODO - sample z randomly
         sess = tf.InteractiveSession()
         with tf.device(device_utils.get_device()):
-            z = tf.random_uniform(shape=[1, self.z_dim], minval=-1, maxval=1, dtype=tf.float32)
+            z = tf.random_normal(shape=[1, self.z_dim], mean=0., stddev=1., dtype=tf.float32)
             gen_out_layer, _ = self.load_gen_with_weights_func(sess, z, self.gen_params_path)
             x_generated = gen_out_layer.outputs
 
