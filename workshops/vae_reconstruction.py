@@ -11,8 +11,8 @@ from utils import fs_utils
 @log
 class VaeImgReconstructor(object):
 
-    def __init__(self, load_enc_with_weights, load_gen_with_weights_func, get_latent_dim_func):
-        self.load_enc_with_weights_func = load_enc_with_weights
+    def __init__(self, load_enc_with_weights_func, load_gen_with_weights_func, get_latent_dim_func):
+        self.load_enc_with_weights_func = load_enc_with_weights_func
         self.load_gen_with_weights_func = load_gen_with_weights_func
         self.z_dim = get_latent_dim_func()
         pass

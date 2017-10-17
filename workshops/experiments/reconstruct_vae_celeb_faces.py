@@ -44,8 +44,8 @@ def sample_celeb_faces(celeb_faces_dir, how_many):
 
 def main():
     args = parse_args()
-    reconstructor = VaeImgReconstructor(load_gen_weights(args.gen_params_path),
-                                        load_enc_weights(args.enc_params_path), get_latent_dim(args.gen_params_path))
+    reconstructor = VaeImgReconstructor(load_enc_weights(args.enc_params_path),
+                                        load_gen_weights(args.gen_params_path), get_latent_dim(args.gen_params_path))
     celeb_imgs = np.array(get_celeb_faces_samples(args.celeb_faces_dir, args.crop_size, args.gen_params_path,
                                                   args.how_many_samples))
     reconstructor.reconstruct_faces(args.out_vis_path, celeb_imgs)
