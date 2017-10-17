@@ -16,7 +16,7 @@ class CelebDataset(object):
         self.logger.info("Celeb faces dataset size = %d" % len(self.celeb_files_list))
 
     def generate_train_mb(self):
-        for i in xrange(len(self.celeb_files_list), self.batch_size):
+        for i in xrange(0, len(self.celeb_files_list), self.batch_size):
             batch_files_list = self.celeb_files_list[i: i + self.batch_size]
             if len(batch_files_list) < self.batch_size:
                 batch_files_list += self.celeb_files_list[0: self.batch_size - len(batch_files_list)]
