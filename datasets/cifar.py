@@ -29,6 +29,15 @@ class CifarDataset(object):
     def classes_num(self):
         return 10
 
+    def img_size(self):
+        return 32
+
+    def size(self):
+        return self.unlab_data.shape[0]
+
+    def batch_size(self):
+        return self.batch_size
+
     def generate_train_mb(self):
         train_size = self.unlab_data.shape[0]
         inds = self.rng.permutation(train_size)
@@ -72,12 +81,6 @@ class CifarDataset(object):
         lab_x = np.concatenate(lab_x, axis=0)
         lab_y = np.concatenate(lab_y, axis=0)
         return lab_x, lab_y
-
-    def img_size(self):
-        return 32
-
-    def size(self):
-        return self.unlab_data.shape[0]
 
     def __read_train_data(self):
         train_batch_files = [op.join(self.cifar_ds_path, p) for p in ["data_batch_%d" % i for i in xrange(1, 6)]]
