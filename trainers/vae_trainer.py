@@ -74,7 +74,7 @@ class VaeTrainer(object):
         sess = tf.InteractiveSession()
         tl.layers.initialize_global_variables(sess)
         ds_size = self.dataset.size()
-        batches_num = len(ds_size) // self.batch_size
+        batches_num = ds_size // self.batch_size
 
         iter_counter = 0
 
