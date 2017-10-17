@@ -9,7 +9,7 @@ from workshops.vae_reconstruction import VaeImgReconstructor
 
 def get_cifar_samples(cifar_ds_path, how_many):
     ds = UnsupervisedCifarDataSet(cifar_ds_path, how_many)
-    return ds.next()
+    return ds.generate_train_mb().next()
 
 
 def main():

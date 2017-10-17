@@ -29,7 +29,7 @@ def get_celeb_faces_samples(celeb_faces_dir, crop_size, gen_params_path, how_man
     celeb_faces_image_paths = sample_celeb_faces(celeb_faces_dir, how_many)
     get_celeb_faces_samples.logger.info("Sampled %d images paths from celeb dataset" % how_many)
     ds = CelebDataset(crop_size, img_size, celeb_faces_image_paths, how_many)
-    return ds.next()
+    return ds.generate_train_mb().next()
 
 
 def sample_celeb_faces(celeb_faces_dir, how_many):
