@@ -1,3 +1,5 @@
+import os.path as op
+
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -11,8 +13,8 @@ from utils import fs_utils
 @log
 class VaeImgReconstructor(object):
 
-    def __init__(self, load_enc_with_weights_func, load_gen_with_weights_func, get_latent_dim_func):
-        self.load_enc_with_weights_func = load_enc_with_weights_func
+    def __init__(self, load_enc_with_weights, load_gen_with_weights_func, get_latent_dim_func):
+        self.load_enc_with_weights_func = load_enc_with_weights
         self.load_gen_with_weights_func = load_gen_with_weights_func
         self.z_dim = get_latent_dim_func()
         pass
@@ -25,20 +27,21 @@ class VaeImgReconstructor(object):
 
         sess = tf.InteractiveSession()
         with tf.device(device_utils.get_device()):
-            input_images = tf.placeholder(dtype=tf.float32, shape=[1, img_size, img_size, 3])
-            _, _, z_mean, z_cov_log_sq = self.load_enc_with_weights_func(sess, input_images)
+            # TODO - create placeholder for input_images
+            input_images = None
+            z_mean, z_cov_log_sq = None, None
+
             eps = tf.random_normal(shape=(1, self.z_dim), mean=0.0, stddev=1.0)
 
-            z = z_mean + tf.multiply(tf.sqrt(tf.exp(z_cov_log_sq)), eps)
-            gen_out_layer, _ = self.load_gen_with_weights_func(sess, z)
-            x_reconstr = gen_out_layer.outputs
+            # TODO - sample z from encoder
+            z = None
+            gen_out, _ = self.load_gen_with_weights_func(sess, z)
 
         reconstr_images = []
         for i in xrange(imgs_to_reconstruct.shape[0]):
-            reconstr_img = sess.run(x_reconstr, feed_dict={input_images: [imgs_to_reconstruct[i, :, :, :]]})
+            # TODO - reconstruct image with graph defined above
+            reconstr_img = None
             reconstr_images.append(reconstr_img[0])
-
-            self.logger.info("Reconstructed %d/%d images" % (i, imgs_to_reconstruct.shape[0]))
 
         img_ops.save_gen_images(reconstr_images, out_path, transformer)
 
