@@ -48,7 +48,7 @@ def main():
                                         load_enc_weights(args.enc_params_path), get_latent_dim(args.gen_params_path))
     celeb_imgs = np.array(get_celeb_faces_samples(args.celeb_faces_dir, args.crop_size, args.gen_params_path,
                                                   args.how_many_samples))
-    reconstructor.reconstruct_faces(args.out_path, celeb_imgs)
+    reconstructor.reconstruct_faces(args.out_vis_path, celeb_imgs)
 
 
 def parse_args():
